@@ -1,0 +1,60 @@
+/* 디자인 토큰: 색(60-30-10)·타이포·간격·모서리·모션.
+   블루바이올렛 단일 액센트, 웨이트 400/500/600만 사용한다. */
+:root {
+  /* 블루바이올렛 스케일 */
+  --v50: #f4f2ff; --v100: #e9e5ff; --v200: #d4ccff; --v300: #b5a9ff; --v400: #8f7ff5;
+  --v500: #7061e8; --v600: #5b4bdb; --v700: #4a3bbf; --v800: #3a2f96; --v900: #2a2270;
+  --ink: #14122b;
+
+  /* 의미 토큰 */
+  --canvas: #f7f7fb;        /* 60% */
+  --surface: #ffffff;       /* 30% */
+  --surface-sunken: #f0eff8;
+  --text: #1a1830;
+  --muted: #5a5873;
+  --line: #e6e4f0;
+  --line-strong: #8b88a3;   /* 입력 경계: 비텍스트 대비 3:1 이상 */
+  --accent: var(--v600);    /* 10% */
+  --accent-hover: var(--v700);
+  --accent-soft: var(--v100);
+  --accent-ink: var(--v800);
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --ok: #14612f;
+  --ok-soft: #e2f5e9;
+  --focus: var(--v900);
+
+  /* 타이포 */
+  --font: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  --fs-meta: .75rem;   /* 12 */
+  --fs-sm: .875rem;    /* 14 */
+  --fs-body: 1rem;     /* 16 */
+  --fs-h3: 1.125rem;   /* 18 */
+  --fs-h2: 1.375rem;   /* 22 */
+  --fs-h1: 1.75rem;    /* 28 */
+  --fs-display: 2.25rem; /* 36 */
+  --lh-tight: 1.2;
+  --lh-body: 1.55;
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+
+  /* 간격: 8pt 격자(4pt 미세) */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px; --s12: 48px; --s16: 64px;
+
+  /* 모서리·그림자 */
+  --r-card: 12px;
+  --r-ctl: 8px;
+  --shadow-1: 0 1px 3px rgba(20, 18, 43, .06);
+  --shadow-sheet: 0 -8px 24px rgba(20, 18, 43, .08);
+
+  /* 모션: 상태 응답 150ms만 */
+  --dur: 150ms;
+  --ease: cubic-bezier(.2, 0, 0, 1);
+
+  /* 레이아웃 */
+  --vp-wide: 1280px;
+  --header-h: 56px;
+  --tabbar-h: 64px;
+  --hit: 44px;
+}

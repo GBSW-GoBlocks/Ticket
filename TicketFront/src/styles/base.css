@@ -1,0 +1,34 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: calc(var(--header-h) + var(--s8)); scroll-padding-bottom: 120px; }
+body {
+  margin: 0; background: var(--canvas); color: var(--text);
+  font-family: var(--font); font-size: var(--fs-body); font-weight: var(--w-regular); line-height: var(--lh-body);
+  word-break: keep-all; overflow-wrap: break-word;
+}
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { margin: 0; font-weight: var(--w-semibold); line-height: var(--lh-tight); }
+h1 { font-size: var(--fs-h1); }
+h2 { font-size: var(--fs-h2); }
+h3 { font-size: var(--fs-h3); line-height: 1.3; }
+p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+dl, dd { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+.muted { color: var(--muted); font-size: var(--fs-sm); }
+.meta { color: var(--muted); font-size: var(--fs-meta); line-height: 1.4; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--fs-sm); word-break: break-all; }
+.err { color: var(--danger); }
+.req { color: var(--danger); }
+
+/* 키보드 포커스: 진보라 + 흰 후광(밝은 면), 어두운 면에서는 반전 */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 2px #fff; }
+.on-ink :focus-visible { outline-color: #fff; box-shadow: 0 0 0 5px var(--focus); }
+
+.skip { position: absolute; left: -999px; top: 0; background: #fff; padding: var(--s3) var(--s4); z-index: 100; }
+.skip:focus { left: var(--s2); top: var(--s2); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
