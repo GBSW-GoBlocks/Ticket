@@ -2,8 +2,8 @@
 // ipfs:// 접두사는 컨트랙트 tokenURI가, 게이트웨이 URL은 이 파일이 읽을 때 붙인다.
 const GATEWAY = import.meta.env.VITE_IPFS_GATEWAY || 'https://ipfs.io/ipfs/'
 
-// CIDv0(Qm…) 또는 CIDv1(base32, b…) + 선택적 경로. JSON을 깨뜨리는 따옴표 등은 이 형식에서 걸러진다.
-const CID_PATH = /^(Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{50,})(\/[\w.\-/]*)?$/
+// CIDv0(Qm…) 또는 CIDv1(base32, b…). 컨트랙트는 영문·숫자 100자 이하만 받으므로 경로(/)는 허용하지 않는다.
+const CID_PATH = /^(Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{50,})$/
 
 // ipfs:// 를 붙여 넣어도 CID만 남긴다.
 export const toCid = (raw) => (raw ?? '').trim().replace(/^ipfs:\/\//, '')

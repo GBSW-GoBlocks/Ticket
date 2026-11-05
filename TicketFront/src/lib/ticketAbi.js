@@ -59,7 +59,7 @@ export const ticketAbi = parseAbi([
   'error SellerCannotBuy()', 'error NotReserving()', 'error NoSuchTicket()', 'error NotForSale()', 'error NotOnSale()',
   'error WrongPrice()', 'error OwnLimit()', 'error NotPrimaryTicket()', 'error NotTicketOwner()', 'error TicketTraded()',
   'error TicketOnSale()', 'error TicketUsed()', 'error AlreadyUsed()', 'error PriceTooHigh()', 'error NothingToWithdraw()',
-  'error TransferFailed()', 'error NotCancled()',
+  'error TransferFailed()', 'error NotCancled()', 'error InvalidImage()',
   // OpenZeppelin ERC721 기본 에러(소각된 티켓 조회 등에서 발생)
   'error ERC721NonexistentToken(uint256 tokenId)',
   'error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner)',

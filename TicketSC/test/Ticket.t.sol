@@ -1221,6 +1221,79 @@ contract TicketTest is Test {
         assertEq(ticket.tokenURI(0), _expectedURI(0, ticket.defaultImageIpfs()));
     }
 
+    /*//////////////////////////////////////////////////////////////
+                        CID 형식 검사 (ipfs:// 접두사·특수문자 거부)
+    //////////////////////////////////////////////////////////////*/
+
+    function test_setDefaultEventImage_rejectsPrefixEmptyAndSpecialChars() public {
+        vm.startPrank(owner);
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage("ipfs://bafkreitest");
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage("");
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage('baf"quote');
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage("baf/path");
+
+        vm.stopPrank();
+
+        // 거부된 값은 저장되지 않는다.
+        assertEq(ticket.tokenURI(0), _expectedURI(0, "bafkreigu624xthfaay7n4qae4lsuu325f2ijkglztf4uahl2r3xtnbxh5y"));
+    }
+
+    function test_setDefaultEventImage_acceptsCidV0AndV1() public {
+        vm.startPrank(owner);
+
+        ticket.setDefaultEventImage("QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG");
+        assertEq(ticket.defaultImageIpfs(), "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG");
+
+        ticket.setDefaultEventImage("bafkreigu624xthfaay7n4qae4lsuu325f2ijkglztf4uahl2r3xtnbxh5y");
+
+        vm.stopPrank();
+    }
+
+    function test_setDefaultEventImage_tooLong_reverts() public {
+        bytes memory b = new bytes(ticket.MAX_CID_LENGTH() + 1);
+        for (uint256 i = 0; i < b.length; i++) b[i] = "a";
+
+        vm.prank(owner);
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage(string(b));
+    }
+
+    function test_addEvent_rejectsInvalidImage() public {
+        vm.startPrank(seller);
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.addEvent("Bad", 5, 2, "ipfs://bafkreitest");
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.addEvent("Bad", 5, 2, 'baf"x');
+
+        vm.stopPrank();
+    }
+
+    function test_setEventImage_rejectsInvalidImage_andEmptyResetsToDefault() public {
+        vm.startPrank(seller);
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setEventImage("ipfs://bafkreitest", EVENT_TITLE);
+
+        ticket.setEventImage("bafchanged", EVENT_TITLE);
+        assertEq(ticket.tokenURI(0), _expectedURI(0, "bafchanged"));
+
+        // 빈 값은 허용되고, 다시 기본 이미지를 쓴다.
+        ticket.setEventImage("", EVENT_TITLE);
+        assertEq(ticket.tokenURI(0), _expectedURI(0, ticket.defaultImageIpfs()));
+
+        vm.stopPrank();
+    }
+
 }
 
 contract RejectingBuyer {
