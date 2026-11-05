@@ -4,6 +4,7 @@ import { formatEther } from 'viem'
 import { useEvents, useTickets, useTx, useWalletContext } from '../lib/hooks'
 import { StatusBadge, SoldOutBadge, Empty, Skeleton, Hint } from '../components/ui'
 import AddressText from '../components/AddressText'
+import Poster from '../components/Poster'
 import Tabs from '../components/Tabs'
 import GuardedButton from '../components/GuardedButton'
 import BuyBox from '../components/BuyBox'
@@ -84,7 +85,7 @@ export default function EventDetail() {
     <>
       <p className="crumb"><Link to="/events">공연</Link> › {event.title}</p>
       <div className="detail">
-        <div className="poster-wrap"><div className="poster" aria-hidden="true" /></div>
+        <div className="poster-wrap"><Poster src={event.image} /></div>
         <div className="detail-info">
           <div className="chip-row">{soldOut ? <SoldOutBadge /> : <StatusBadge event={event} />}</div>
           <h1>{event.title}</h1>

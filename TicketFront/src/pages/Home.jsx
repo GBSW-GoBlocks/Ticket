@@ -4,6 +4,7 @@ import { eventStats } from '../lib/stats'
 import { formatEth } from '../lib/format'
 import { usePageTitle } from '../lib/title'
 import EventFeed from '../components/EventFeed'
+import Poster from '../components/Poster'
 import { Empty, Skeleton, StatusBadge } from '../components/ui'
 
 // 마케팅 구성: 히어로(예매중 최신 1건) + 필터 피드. 예매중 공연이 없으면 소개 문구와 공연 목록 링크.
@@ -43,7 +44,7 @@ export default function Home() {
               </>
             )}
           </div>
-          {featured && <div className="poster" aria-hidden="true" />}
+          {featured && <Poster src={featured.image} />}
         </div>
       </section>
 
