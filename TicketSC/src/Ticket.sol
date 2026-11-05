@@ -1,13 +1,16 @@
 //SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.34;
 
-import  "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/Base64.sol";
 
 contract Ticket is ERC721 {
     address internal owner;
     uint256 private nextTokenId;
     uint256 private eventId = 1;
     uint256[] internal ticketsForSale;
+
     // 행사별 티켓 id 목록(전체 순회 대신 사용)과 판매 목록 인덱스(index + 1, 0이면 목록에 없음)
     mapping(uint256 => uint256[]) internal eventTicketIds;
     mapping(uint256 => uint256) internal listIndex;
@@ -15,6 +18,8 @@ contract Ticket is ERC721 {
     // 한 행사의 티켓 수와 발행 1회 수량 상한: 상태 전환 반복문이 블록 가스 한도를 넘지 않게 한다.
     uint256 public constant MAX_EVENT_TICKETS = 300;
     uint256 public constant MAX_MINT_BATCH = 100;
+    // CIDv0은 46자, CIDv1(base32)은 보통 59자라서 여유를 두고 상한을 둔다.
+    uint256 public constant MAX_CID_LENGTH = 100;
 
     mapping(address => bool) internal isSeller;
     mapping(address => bool) internal sellerRequests;
@@ -25,6 +30,8 @@ contract Ticket is ERC721 {
     mapping(uint256 => EventInfo) internal eventInfo;
     mapping(string => uint256) internal eventIdByTitle;
     mapping(uint256 => mapping(address => uint256)) internal ownTickets;
+
+    string public defaultImageIpfs = "bafkreigu624xthfaay7n4qae4lsuu325f2ijkglztf4uahl2r3xtnbxh5y";
 
     enum EventProgressInfo {
         Reserving,
@@ -47,6 +54,7 @@ contract Ticket is ERC721 {
         string title;
         uint256 eventId;
         address registrant;
+        string imageIpfs;
         EventProgressInfo progressInfo;
         uint256 maxMintedTicketAmount;
         uint256 mintedTicketAmount;
@@ -87,6 +95,7 @@ contract Ticket is ERC721 {
     error NothingToWithdraw();
     error TransferFailed();
     error NotCancled();
+    error InvalidImage();
 
     event EventCreated(address indexed creator, uint256 indexed eventId, string title);
     event EventStarted(string title);
@@ -100,6 +109,8 @@ contract Ticket is ERC721 {
     event TicketRefunded(uint256 indexed eventId, uint256 indexed ticketId, address indexed buyer, uint256 amount);
     event TicketListed(uint256 indexed ticketId, uint256 price);
     event TicketUnlisted(uint256 indexed ticketId);
+    event defaultImageChanged(string imageIpfs);
+    event eventImageChanged(string title, string imageIpfs);
 
     constructor() ERC721("Event Ticket", "TCKT") {
         owner = msg.sender;
@@ -178,14 +189,16 @@ contract Ticket is ERC721 {
         return (isSeller[_user], sellerRequests[_user]);
     }
 
-    function addEvent(string calldata _title, uint256 _maxTicketAmount, uint256 _maxOwnableTicketAmount) external onlySeller {
+    function addEvent(string calldata _title, uint256 _maxTicketAmount, uint256 _maxOwnableTicketAmount, string calldata _imageIpfs) external onlySeller {
         if (eventIdByTitle[_title] != 0) revert EventExists();
         if (_maxTicketAmount == 0 || _maxOwnableTicketAmount == 0 || _maxTicketAmount > MAX_EVENT_TICKETS) revert InvalidAmount();
+        _checkCid(_imageIpfs);
 
         eventInfo[eventId] = EventInfo({
             title: _title,
             eventId: eventId,
             registrant: msg.sender,
+            imageIpfs: _imageIpfs,
             progressInfo: EventProgressInfo.BeforeStart,
             maxMintedTicketAmount: _maxTicketAmount,
             mintedTicketAmount: 0,
@@ -267,6 +280,39 @@ contract Ticket is ERC721 {
         eventInfo[targetEventId].progressInfo = EventProgressInfo.Cancled;
 
         emit EventStateChanged(targetEventId, EventProgressInfo.Cancled);
+    }
+
+    // 기본 이미지는 비울 수 없다. (이미지를 지정하지 않은 행사가 모두 이 값을 쓴다)
+    function setDefaultEventImage(string calldata _ipfs) external onlyOwner() {
+        if (bytes(_ipfs).length == 0) revert InvalidImage();
+        _checkCid(_ipfs);
+
+        defaultImageIpfs = _ipfs;
+
+        emit defaultImageChanged(_ipfs);
+    }
+
+    // 빈 값을 넣으면 다시 기본 이미지를 쓴다.
+    function setEventImage(string calldata _ipfs, string calldata  _title) external OnlyEventRegistrant(_title) {
+        _checkCid(_ipfs);
+
+        eventInfo[eventIdByTitle[_title]].imageIpfs = _ipfs;
+
+        emit eventImageChanged(_title, _ipfs);
+    }
+
+    // 이미지는 ipfs:// 접두사 없이 CID(영문·숫자)만 저장한다. 접두사는 tokenURI가 붙이고,
+    // 따옴표 등이 들어가 메타데이터 JSON이 깨지는 것도 막는다. 빈 값은 허용한다.
+    function _checkCid(string calldata _cid) internal pure {
+        bytes calldata b = bytes(_cid);
+
+        if (b.length > MAX_CID_LENGTH) revert InvalidImage();
+
+        for (uint256 i = 0; i < b.length; i++) {
+            bytes1 c = b[i];
+
+            if (!((c >= "0" && c <= "9") || (c >= "A" && c <= "Z") || (c >= "a" && c <= "z"))) revert InvalidImage();
+        }
     }
 
     // 취소된 행사에서 최초 예매자가 그대로 보유한 티켓의 예매금을 환불받는다. 양도된 티켓은 환불하지 않는다.
@@ -565,5 +611,19 @@ contract Ticket is ERC721 {
         if (!success) revert TransferFailed();
 
         emit ProceedsWithdrawn(msg.sender, amount);
+    }
+
+    function tokenURI(uint256 _ticketId) public view override returns (string memory) {
+        _requireOwned(_ticketId);
+
+        string memory image = eventInfo[ticketInfo[_ticketId].eventId].imageIpfs;
+        if (bytes(image).length == 0) image = defaultImageIpfs;
+
+        return string.concat(
+            "data:application/json;base64,",
+            Base64.encode(abi.encodePacked(
+                '{"name":"Ticket #', Strings.toString(_ticketId), '","image":"ipfs://', image, '"}'
+            ))
+        );
     }
 }

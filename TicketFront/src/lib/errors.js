@@ -41,6 +41,7 @@ const CONTRACT_ERRORS = {
   ERC721InvalidApprover: '이 티켓은 승인 기능을 사용할 수 없습니다.',
   ERC721InvalidOperator: '이 티켓은 승인 기능을 사용할 수 없습니다.',
   NotCancled: '취소된 행사에서만 환불을 청구할 수 있습니다.',
+  InvalidImage: '이미지 CID가 올바르지 않습니다. ipfs:// 없이 영문·숫자로 된 CID만 입력할 수 있습니다.',
   TransferFailed: '송금에 실패했습니다. 받는 지갑이 입금을 거부했을 수 있습니다.',
 }
 

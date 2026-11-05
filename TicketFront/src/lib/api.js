@@ -1,6 +1,7 @@
 import { zeroAddress } from 'viem'
 import { same } from './format'
 import { ticketAbi } from './ticketAbi'
+import { ipfsUrl } from './ipfs'
 import { TICKET_ADDRESS, DEPLOY_BLOCK } from './wagmi'
 
 const base = { address: TICKET_ADDRESS, abi: ticketAbi }
@@ -14,10 +15,14 @@ export async function loadEvents(client) {
     const list = await client.readContract({ ...base, functionName: 'viewEvents', args: [from, PAGE] })
     rows.push(...list)
   }
+  // 이미지를 지정하지 않은 행사는 컨트랙트의 기본 이미지를 쓴다. (tokenURI와 같은 규칙)
+  const defaultImage = await client.readContract({ ...base, functionName: 'defaultImageIpfs' })
   return rows.map((e) => ({
     id: Number(e.eventId),
     title: e.title,
     registrant: e.registrant,
+    imageIpfs: e.imageIpfs,
+    image: ipfsUrl(e.imageIpfs || defaultImage),
     progress: Number(e.progressInfo),
     maxMinted: Number(e.maxMintedTicketAmount),
     minted: Number(e.mintedTicketAmount),

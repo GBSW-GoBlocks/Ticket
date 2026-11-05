@@ -3,6 +3,8 @@ pragma solidity ^0.8.34;
 
 import {Test} from "forge-std/Test.sol";
 import {Ticket} from "../src/Ticket.sol";
+import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract TicketTest is Test {
     Ticket ticket;
@@ -35,7 +37,8 @@ contract TicketTest is Test {
         ticket.addEvent(
             EVENT_TITLE,
             MAX_TICKETS,
-            MAX_OWNABLE
+            MAX_OWNABLE,
+            ""
         );
 
         // seller가 티켓 3장 발행
@@ -148,7 +151,8 @@ contract TicketTest is Test {
         ticket.addEvent(
             "Another Concert",
             10,
-            2
+            2,
+            ""
         );
     }
 
@@ -162,7 +166,8 @@ contract TicketTest is Test {
         ticket.addEvent(
             EVENT_TITLE,
             10,
-            2
+            2,
+            ""
         );
     }
 
@@ -1035,9 +1040,9 @@ contract TicketTest is Test {
         vm.startPrank(seller);
 
         vm.expectRevert(Ticket.InvalidAmount.selector);
-        ticket.addEvent("Too Big", 301, 2);
+        ticket.addEvent("Too Big", 301, 2, "");
 
-        ticket.addEvent("Big", 300, 2);
+        ticket.addEvent("Big", 300, 2, "");
 
         vm.expectRevert(Ticket.InvalidAmount.selector);
         ticket.mintTicket("Big", 101, RESERVATION_PRICE);
@@ -1086,7 +1091,7 @@ contract TicketTest is Test {
 
     function test_finishReservation_burnsOnlyThisEventsUnsold() public {
         vm.prank(seller);
-        ticket.addEvent("Other", 5, 2);
+        ticket.addEvent("Other", 5, 2, "");
         vm.prank(seller);
         ticket.mintTicket("Other", 2, RESERVATION_PRICE);
 
@@ -1102,7 +1107,7 @@ contract TicketTest is Test {
     // 최대 크기(300장) 행사의 예매 마감(미판매 전량 소각)이 블록 가스 한도(30M) 안에 든다.
     function test_gas_finishReservation_atMaxEventSize() public {
         vm.startPrank(seller);
-        ticket.addEvent("Max", 300, 4);
+        ticket.addEvent("Max", 300, 4, "");
         ticket.mintTicket("Max", 100, RESERVATION_PRICE);
         ticket.mintTicket("Max", 100, RESERVATION_PRICE);
         ticket.mintTicket("Max", 100, RESERVATION_PRICE);
@@ -1115,6 +1120,178 @@ contract TicketTest is Test {
 
         emit log_named_uint("finishReservation gas (300 tickets)", used);
         assertLt(used, 30_000_000);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            TOKEN URI / IMAGE
+    //////////////////////////////////////////////////////////////*/
+
+    function _expectedURI(uint256 id, string memory image) internal pure returns (string memory) {
+        return string.concat(
+            "data:application/json;base64,",
+            Base64.encode(abi.encodePacked('{"name":"Ticket #', Strings.toString(id), '","image":"ipfs://', image, '"}'))
+        );
+    }
+
+    function test_tokenURI_usesDefaultImage_whenEventHasNoImage() public view {
+        assertEq(ticket.tokenURI(0), _expectedURI(0, ticket.defaultImageIpfs()));
+    }
+
+    function test_tokenURI_usesEventImage() public {
+        vm.startPrank(seller);
+        ticket.addEvent("Art", 5, 2, "bafcustom");
+        ticket.mintTicket("Art", 1, RESERVATION_PRICE);
+        vm.stopPrank();
+
+        // setUp에서 3장(0~2)을 발행했으므로 새 티켓은 3번이다.
+        assertEq(ticket.tokenURI(3), _expectedURI(3, "bafcustom"));
+        assertEq(ticket.tokenURI(0), _expectedURI(0, ticket.defaultImageIpfs()));
+    }
+
+    function test_setEventImage_changesTokenURI() public {
+        vm.prank(seller);
+        ticket.setEventImage("bafchanged", EVENT_TITLE);
+
+        assertEq(ticket.tokenURI(0), _expectedURI(0, "bafchanged"));
+        assertEq(ticket.tokenURI(2), _expectedURI(2, "bafchanged"));
+    }
+
+    function test_setEventImage_emitsEvent() public {
+        vm.expectEmit(false, false, false, true);
+        emit Ticket.eventImageChanged(EVENT_TITLE, "bafchanged");
+
+        vm.prank(seller);
+        ticket.setEventImage("bafchanged", EVENT_TITLE);
+    }
+
+    function test_setEventImage_byOtherUser_reverts() public {
+        vm.prank(buyer);
+        vm.expectRevert(Ticket.NotRegistrant.selector);
+        ticket.setEventImage("bafhack", EVENT_TITLE);
+    }
+
+    function test_setEventImage_otherSeller_reverts() public {
+        address seller2 = makeAddr("seller2");
+
+        vm.prank(seller2);
+        ticket.requestSeller();
+        vm.prank(owner);
+        ticket.approveSellerRequest(seller2);
+
+        vm.prank(seller2);
+        vm.expectRevert(Ticket.NotRegistrant.selector);
+        ticket.setEventImage("bafhack", EVENT_TITLE);
+    }
+
+    function test_setEventImage_unknownEvent_reverts() public {
+        vm.prank(seller);
+        vm.expectRevert(Ticket.EventNotFound.selector);
+        ticket.setEventImage("bafx", "No Such Event");
+    }
+
+    function test_setDefaultEventImage_onlyOwner() public {
+        vm.prank(seller);
+        vm.expectRevert(Ticket.NotAdmin.selector);
+        ticket.setDefaultEventImage("bafhack");
+
+        vm.expectEmit(false, false, false, true);
+        emit Ticket.defaultImageChanged("bafnewdefault");
+
+        vm.prank(owner);
+        ticket.setDefaultEventImage("bafnewdefault");
+
+        assertEq(ticket.defaultImageIpfs(), "bafnewdefault");
+        // 이미지를 지정하지 않은 행사에는 바뀐 기본 이미지가 바로 반영된다.
+        assertEq(ticket.tokenURI(0), _expectedURI(0, "bafnewdefault"));
+    }
+
+    function test_tokenURI_unknownToken_reverts() public {
+        vm.expectRevert();
+        ticket.tokenURI(999);
+    }
+
+    function test_tokenURI_burnedToken_reverts() public {
+        _reserveAndClose();
+
+        // 팔리지 않은 1번은 finishReservation에서 소각된다.
+        vm.expectRevert();
+        ticket.tokenURI(1);
+
+        // 팔린 0번은 그대로 조회된다.
+        assertEq(ticket.tokenURI(0), _expectedURI(0, ticket.defaultImageIpfs()));
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                        CID 형식 검사 (ipfs:// 접두사·특수문자 거부)
+    //////////////////////////////////////////////////////////////*/
+
+    function test_setDefaultEventImage_rejectsPrefixEmptyAndSpecialChars() public {
+        vm.startPrank(owner);
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage("ipfs://bafkreitest");
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage("");
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage('baf"quote');
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage("baf/path");
+
+        vm.stopPrank();
+
+        // 거부된 값은 저장되지 않는다.
+        assertEq(ticket.tokenURI(0), _expectedURI(0, "bafkreigu624xthfaay7n4qae4lsuu325f2ijkglztf4uahl2r3xtnbxh5y"));
+    }
+
+    function test_setDefaultEventImage_acceptsCidV0AndV1() public {
+        vm.startPrank(owner);
+
+        ticket.setDefaultEventImage("QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG");
+        assertEq(ticket.defaultImageIpfs(), "QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG");
+
+        ticket.setDefaultEventImage("bafkreigu624xthfaay7n4qae4lsuu325f2ijkglztf4uahl2r3xtnbxh5y");
+
+        vm.stopPrank();
+    }
+
+    function test_setDefaultEventImage_tooLong_reverts() public {
+        bytes memory b = new bytes(ticket.MAX_CID_LENGTH() + 1);
+        for (uint256 i = 0; i < b.length; i++) b[i] = "a";
+
+        vm.prank(owner);
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setDefaultEventImage(string(b));
+    }
+
+    function test_addEvent_rejectsInvalidImage() public {
+        vm.startPrank(seller);
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.addEvent("Bad", 5, 2, "ipfs://bafkreitest");
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.addEvent("Bad", 5, 2, 'baf"x');
+
+        vm.stopPrank();
+    }
+
+    function test_setEventImage_rejectsInvalidImage_andEmptyResetsToDefault() public {
+        vm.startPrank(seller);
+
+        vm.expectRevert(Ticket.InvalidImage.selector);
+        ticket.setEventImage("ipfs://bafkreitest", EVENT_TITLE);
+
+        ticket.setEventImage("bafchanged", EVENT_TITLE);
+        assertEq(ticket.tokenURI(0), _expectedURI(0, "bafchanged"));
+
+        // 빈 값은 허용되고, 다시 기본 이미지를 쓴다.
+        ticket.setEventImage("", EVENT_TITLE);
+        assertEq(ticket.tokenURI(0), _expectedURI(0, ticket.defaultImageIpfs()));
+
+        vm.stopPrank();
     }
 
 }

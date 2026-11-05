@@ -75,6 +75,8 @@
 
 /* ---------- 포스터·이벤트 카드(K3) ---------- */
 .poster { aspect-ratio: 3 / 4; border-radius: var(--r-ctl); background: linear-gradient(160deg, var(--v800), var(--v500) 60%, var(--v200)); }
+.poster { overflow: hidden; }
+.poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s4); }
 .event-card { display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-1); overflow: hidden; transition: border-color var(--dur) var(--ease); }
 .event-card:hover { border-color: var(--accent); }

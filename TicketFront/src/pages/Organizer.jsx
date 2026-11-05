@@ -12,6 +12,7 @@ import AddressText from '../components/AddressText'
 import { StatusBadge } from '../components/ui'
 import { same, formatEth } from '../lib/format'
 import { checkEth, checkInt, checkText } from '../lib/validate'
+import { checkImageCid, toCid } from '../lib/ipfs'
 import { actionBlock, stageOf, STAGE_LABEL } from '../lib/stage'
 import { useConfirm } from '../lib/confirm'
 import { MAX_EVENT_TICKETS, MAX_MINT_BATCH } from '../lib/limits'
@@ -102,7 +103,7 @@ export default function Organizer() {
   const role = useRole()
   const { data: events = [] } = useEvents()
   const { send, busy } = useTx()
-  const [form, setForm] = useState({ title: '', max: '', own: '' })
+  const [form, setForm] = useState({ title: '', max: '', own: '', image: '' })
   const [formKey, setFormKey] = useState(0)
   const set = (k) => (v) => setForm({ ...form, [k]: v })
   const title = form.title.trim()
@@ -134,6 +135,7 @@ export default function Organizer() {
       (events.some((e) => e.title === title) ? '같은 제목의 공연이 이미 있습니다.' : ''),
     max: checkInt(form.max, '최대 발행량') || (Number(form.max) > MAX_EVENT_TICKETS ? `행사당 최대 ${MAX_EVENT_TICKETS}장까지 만들 수 있습니다.` : ''),
     own: checkInt(form.own, '지갑당 최대 보유') || (!checkInt(form.max, '') && Number(form.own) > Number(form.max) ? '지갑당 보유 한도는 최대 발행량 이하여야 합니다.' : ''),
+    image: checkImageCid(form.image),
   }
   const invalid = Object.values(errs).some(Boolean)
 
@@ -161,9 +163,9 @@ export default function Organizer() {
   }
 
   const register = async () => {
-    const ok = await send('addEvent', [title, BigInt(form.max.trim()), BigInt(form.own.trim())], undefined, `행사 "${title}" 등록`)
+    const ok = await send('addEvent', [title, BigInt(form.max.trim()), BigInt(form.own.trim()), toCid(form.image)], undefined, `행사 "${title}" 등록`)
     if (ok) {
-      setForm({ title: '', max: '', own: '' })
+      setForm({ title: '', max: '', own: '', image: '' })
       setFormKey((k) => k + 1)
     }
   }
@@ -187,6 +189,7 @@ export default function Organizer() {
           <Field key={`t${formKey}`} required label="공연 제목" hint={`${MAX_TITLE}자 이하, 중복 제목은 등록할 수 없습니다.`} error={errs.title} value={form.title} onChange={set('title')} maxLength={MAX_TITLE} />
           <Field key={`m${formKey}`} required label="최대 발행량" hint="이 공연에서 발행 가능한 총 티켓 수" error={errs.max} value={form.max} onChange={set('max')} inputMode="numeric" />
           <Field key={`o${formKey}`} required label="지갑당 최대 보유" hint="한 지갑이 가질 수 있는 티켓 수 (최대 발행량 이하)" error={errs.own} value={form.own} onChange={set('own')} inputMode="numeric" />
+          <Field key={`i${formKey}`} label="포스터 이미지 CID" hint="IPFS에 올린 이미지의 CID (선택). 비워 두면 기본 이미지가 쓰입니다." error={errs.image} value={form.image} onChange={set('image')} placeholder="bafkrei…" />
           <GuardedButton type="submit" busy={busy} reason={invalid ? '입력값을 확인해주세요.' : ''}>등록</GuardedButton>
         </form>
       </section>
