@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
 import { useRole } from '../lib/hooks'
 import { chain, TICKET_ADDRESS } from '../lib/wagmi'
@@ -58,6 +58,22 @@ function WalletMenu({ role }) {
   )
 }
 
+// 데스크톱 헤더 검색: 공연 목록의 ?q= 로 이동한다. (모바일은 목록 화면의 검색칸을 쓴다)
+function HeaderSearch() {
+  const navigate = useNavigate()
+  const submit = (e) => {
+    e.preventDefault()
+    const q = new FormData(e.currentTarget).get('q')?.toString().trim()
+    navigate(q ? `/events?q=${encodeURIComponent(q)}` : '/events')
+  }
+  return (
+    <form className="hsearch" role="search" onSubmit={submit}>
+      <label htmlFor="hsearch-q" className="sr-only">공연 검색</label>
+      <input id="hsearch-q" name="q" type="search" placeholder="공연 제목 검색" autoComplete="off" />
+    </form>
+  )
+}
+
 export function Header() {
   const { isConnected } = useAccount()
   const { connect, connectors, isPending } = useConnect()
@@ -69,11 +85,13 @@ export function Header() {
       <div className="header-in">
         <NavLink to="/" className="logo">TICKET</NavLink>
         <nav className="nav" aria-label="주 메뉴">
+          <NavLink to="/" end>홈</NavLink>
           <NavLink to="/events">공연</NavLink>
           <NavLink to="/market">티켓 2차 거래</NavLink>
           <NavLink to="/my">내 티켓</NavLink>
           {extra && <NavLink to={extra.to}>{extra.label}</NavLink>}
         </nav>
+        <HeaderSearch />
         <div className="wallet">
           {isConnected ? (
             <WalletMenu role={role} />
@@ -91,6 +109,7 @@ export function Header() {
 // 모바일 하단 탭바. 공연 상세에서는 CSS로 숨기고 예매 바가 대신한다.
 export function TabBar() {
   const items = [
+    ['/', '홈', 'home'],
     ['/events', '공연', 'events'],
     ['/market', '2차 거래', 'market'],
     ['/my', '내 티켓', 'ticket'],
@@ -99,7 +118,7 @@ export function TabBar() {
   return (
     <nav className="tabbar" aria-label="하단 메뉴">
       {items.map(([to, label, icon]) => (
-        <NavLink key={to} to={to}><Icon name={icon} />{label}</NavLink>
+        <NavLink key={to} to={to} end={to === '/'}><Icon name={icon} />{label}</NavLink>
       ))}
     </nav>
   )

@@ -85,3 +85,45 @@
   .image-setting { grid-template-columns: 72px minmax(0, 1fr); gap: var(--s3); }
   .stat strong { font-size: var(--fs-h3); }
 }
+
+/* ---------- 재정립: 목록 도구줄 · 포스터 카드 · 홈 레일 · 상세 고정 탭 ---------- */
+.hsearch { flex: 0 1 280px; margin-left: auto; }
+.hsearch + .wallet { margin-left: 0; }
+.hsearch input, .feed-find input { width: 100%; min-height: var(--hit); padding: 0 var(--s4); border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); font-size: var(--fs-sm); }
+.hsearch input:hover, .feed-find input:hover { border-color: var(--accent); }
+
+.feed-tools { display: flex; align-items: center; justify-content: space-between; gap: var(--s3) var(--s4); flex-wrap: wrap; }
+.feed-find { display: flex; gap: var(--s2); flex: 1 1 320px; justify-content: flex-end; }
+.feed-find .field { min-width: 0; }
+.feed-find .field:first-child { flex: 1 1 200px; max-width: 320px; }
+
+.poster-box { position: relative; }
+.poster-box .poster { border-radius: 0; }
+.poster-badge { position: absolute; left: var(--s2); top: var(--s2); }
+.poster-badge .chip { background: rgba(20, 18, 43, .82); color: #fff; backdrop-filter: none; }
+.poster-badge .chip-reserving { background: var(--ok); }
+.event-card h3 { margin: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-body); line-height: 1.35; }
+.event-card .meta-box { gap: var(--s1); padding: var(--s3) var(--s3) var(--s4); }
+.event-card .price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--s2); color: var(--accent); }
+.event-card .price small { font-size: var(--fs-meta); font-weight: var(--w-medium); }
+.event-card .price .seats { color: var(--muted); font-size: var(--fs-meta); font-weight: var(--w-regular); }
+
+.section-head .more { color: var(--accent); font-size: var(--fs-sm); font-weight: var(--w-medium); min-height: var(--hit); display: inline-flex; align-items: center; }
+.section-head .more:hover { text-decoration: underline; }
+.rail { display: flex; gap: var(--s4); overflow-x: auto; padding-bottom: var(--s2); scroll-snap-type: x proximity; scrollbar-width: thin; }
+.rail > li { flex: 0 0 200px; scroll-snap-align: start; display: grid; }
+
+/* 상세: 탭은 헤더 아래에 붙어 따라온다. 목록 길이와 상관없이 구역 이동이 가능하다. */
+.detail ~ .after-section .tabs { position: sticky; top: var(--header-h); z-index: 15; background: var(--canvas); }
+
+@media (max-width: 767.98px) {
+  .hsearch { display: none; }
+  .hsearch + .wallet { margin-left: auto; }
+  .feed-find { flex-basis: 100%; justify-content: stretch; }
+  .feed-find .field:first-child { max-width: none; }
+  .tabbar { grid-template-columns: repeat(5, 1fr); }
+  .rail > li { flex-basis: 160px; }
+  .rail .event-card { grid-template-columns: 1fr; }
+  .rail .event-card .poster { height: auto; aspect-ratio: 3 / 4; }
+  .poster-box { height: 100%; }
+}

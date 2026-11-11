@@ -2,12 +2,34 @@ import { Link } from 'react-router-dom'
 import { useEvents, useTickets } from '../lib/hooks'
 import { eventStats } from '../lib/stats'
 import { formatEth } from '../lib/format'
+import { stageOf } from '../lib/stage'
 import { usePageTitle } from '../lib/title'
-import EventFeed from '../components/EventFeed'
+import EventCard from '../components/EventCard'
 import Poster from '../components/Poster'
 import { Empty, Skeleton, StatusBadge } from '../components/ui'
 
-// 마케팅 구성: 히어로(예매중 최신 1건) + 필터 피드. 예매중 공연이 없으면 소개 문구와 공연 목록 링크.
+// 홈 구성: 추천 1건(히어로) + 단계별 가로 레일. 비어 있는 레일은 보여주지 않는다.
+const RAILS = [
+  { key: 'reserving', title: '지금 예매할 수 있는 공연', stages: ['reserving'], link: '/events?status=reserving' },
+  { key: 'closed', title: '양도 티켓을 찾아보세요', stages: ['closed', 'started'], link: '/market' },
+  { key: 'draft', title: '오픈 예정', stages: ['draft'], link: '/events?status=draft' },
+  { key: 'finished', title: '지난 공연', stages: ['finished', 'cancled'], link: '/events?status=finished' },
+]
+
+function Rail({ title, link, items, tickets }) {
+  return (
+    <section aria-label={title}>
+      <div className="section-head">
+        <h2>{title}</h2>
+        <Link className="more" to={link}>전체 보기</Link>
+      </div>
+      <ul className="rail">
+        {items.map((e) => <li key={e.id}><EventCard event={e} stats={eventStats(e, tickets)} /></li>)}
+      </ul>
+    </section>
+  )
+}
+
 export default function Home() {
   usePageTitle('')
   const { data: events = [], isLoading } = useEvents()
@@ -17,6 +39,8 @@ export default function Home() {
   const withSeats = open.filter((e) => eventStats(e, tickets).open > 0)
   const featured = withSeats[withSeats.length - 1] ?? open[open.length - 1]
   const stats = featured ? eventStats(featured, tickets) : null
+  const latest = [...events].sort((a, b) => b.id - a.id)
+  const rails = RAILS.map((r) => ({ ...r, items: latest.filter((e) => r.stages.includes(stageOf(e))).slice(0, 8) })).filter((r) => r.items.length)
 
   return (
     <div className="home">
@@ -48,15 +72,9 @@ export default function Home() {
         </div>
       </section>
 
-      <section aria-labelledby="home-feed">
-        <div className="section-head">
-          <h2 id="home-feed">공연</h2>
-          <Link className="btn ghost" to="/events">전체 보기</Link>
-        </div>
-        {isLoading && <Skeleton rows={3} />}
-        {!isLoading && events.length === 0 && <Empty to="/events" label="공연 목록으로">등록된 공연이 없습니다.</Empty>}
-        {events.length > 0 && <EventFeed events={events} tickets={tickets} autoOpen />}
-      </section>
+      {isLoading && <Skeleton rows={3} />}
+      {!isLoading && events.length === 0 && <Empty to="/events" label="공연 목록으로">등록된 공연이 없습니다.</Empty>}
+      {rails.map((r) => <Rail key={r.key} {...r} tickets={tickets} />)}
     </div>
   )
 }

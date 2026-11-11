@@ -18,7 +18,7 @@ export default function BuyBox({ variant, stage, prices, soldOut, reason, busy, 
     heading = '예매 가격'
     if (prices) {
       const range = prices.min === prices.max ? formatEth(prices.min) : `${formatEth(prices.min)} ~ ${formatEth(prices.max)}`
-      summary = <span className="price-big">{range} <small>ETH</small></span>
+      summary = <span className="price-big">{range} <small>ETH · 가스비 별도</small></span>
       note = prices.min === prices.max ? null : '가장 낮은 가격의 티켓부터 예매됩니다.'
       hint = reason
       action = (
