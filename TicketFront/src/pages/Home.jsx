@@ -19,7 +19,7 @@ export default function Home() {
   const stats = featured ? eventStats(featured, tickets) : null
 
   return (
-    <div className="stack" style={{ gap: 'var(--s8)' }}>
+    <div className="home">
       <section className="band on-ink" aria-label="추천 공연">
         <div className="hero">
           <div>
@@ -33,7 +33,7 @@ export default function Home() {
                 </p>
                 <div className="hero-meta">
                   <Link className="btn light" to={`/events/${featured.id}`}>예매하기</Link>
-                  <Link className="btn ghost" to="/events" style={{ background: 'transparent', color: '#fff', borderColor: '#8b88a3' }}>전체 공연 보기</Link>
+                  <Link className="btn on-ink" to="/events">전체 공연 보기</Link>
                 </div>
               </>
             ) : (
@@ -49,7 +49,7 @@ export default function Home() {
       </section>
 
       <section aria-labelledby="home-feed">
-        <div className="row" style={{ marginBottom: 'var(--s4)' }}>
+        <div className="section-head">
           <h2 id="home-feed">공연</h2>
           <Link className="btn ghost" to="/events">전체 보기</Link>
         </div>

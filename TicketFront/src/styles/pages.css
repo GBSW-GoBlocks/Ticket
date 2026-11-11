@@ -59,3 +59,29 @@
 }
 
 .after-section { margin-top: var(--s8); }
+
+/* page-head 는 .stack 안에서 간격을 gap 이 정하므로 이중 여백을 막는다. */
+.stack > .page-head { margin-bottom: 0; }
+.home { display: grid; gap: var(--s8); }
+
+/* 태블릿: 3단 상세가 좁아지므로 정보 영역을 넓히고 예매 패널을 아래로 내린다. */
+@media (max-width: 1023.98px) and (min-width: 768px) {
+  .detail { grid-template-columns: 200px 1fr; gap: var(--s6); }
+  .detail .buy-panel { grid-column: 1 / -1; position: static; }
+  .stub { grid-template-columns: minmax(0, 1fr) auto; }
+}
+
+
+/* 모바일: 필터 입력은 한 줄을 꽉 채우고, 고정 하단 바가 푸터를 가리지 않게 한다. */
+@media (max-width: 767.98px) {
+  .toolbar { gap: var(--s3); align-items: flex-end; }
+  .toolbar .field { flex: 1 1 140px; min-width: 0; }
+  .toolbar .field select { width: 100%; }
+  .toolbar > .muted { flex-basis: 100%; }
+  .footer { margin-top: var(--s6); }
+  .footer-in { padding: var(--s6) var(--s4) calc(var(--tabbar-h) + var(--s6) + env(safe-area-inset-bottom)); }
+  body:has(.buy-bar) .footer-in { padding-bottom: calc(96px + var(--s6)); }
+  .form-row { grid-template-columns: 1fr; }
+  .image-setting { grid-template-columns: 72px minmax(0, 1fr); gap: var(--s3); }
+  .stat strong { font-size: var(--fs-h3); }
+}

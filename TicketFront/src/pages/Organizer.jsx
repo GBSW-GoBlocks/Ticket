@@ -7,6 +7,7 @@ import { TICKET_ADDRESS } from '../lib/wagmi'
 import { Empty, PageHead, ConnectPrompt } from '../components/ui'
 import Stepper from '../components/Stepper'
 import Field from '../components/Field'
+import ImageField from '../components/ImageField'
 import GuardedButton from '../components/GuardedButton'
 import AddressText from '../components/AddressText'
 import { StatusBadge } from '../components/ui'
@@ -24,8 +25,14 @@ function EventPanel({ event, send, busy }) {
   const [amount, setAmount] = useState('')
   const [price, setPrice] = useState('')
   const [formKey, setFormKey] = useState(0)
+  const [img, setImg] = useState('')
   const ask = useConfirm()
   const stage = stageOf(event)
+  // 비우면 기본 이미지로 되돌린다. 현재 값과 같으면 보낼 필요가 없다.
+  const imgBlock = checkImageCid(img) || (toCid(img) === (event.imageIpfs || '') ? '현재 이미지와 같습니다.' : '')
+  const saveImage = async () => {
+    if (await send('setEventImage', [toCid(img), event.title], undefined, `${event.title} 이미지 변경`)) setImg('')
+  }
   const remain = event.maxMinted - event.minted
   const over = Number(amount.trim()) > remain ? (remain > 0 ? `남은 발행 가능 수량은 ${remain}장입니다.` : '이미 최대 수량을 모두 발행했습니다.') : ''
   const errA = checkInt(amount, '발행 수량') || (Number(amount) > MAX_MINT_BATCH ? `한 번에 최대 ${MAX_MINT_BATCH}장까지 발행할 수 있습니다.` : '') || over
@@ -63,6 +70,15 @@ function EventPanel({ event, send, busy }) {
       )}
       {stage !== 'draft' && stage !== 'finished' && stage !== 'cancled' && (
         <p className="muted">티켓 발행은 예매를 시작하기 전(준비중)에만 할 수 있습니다.</p>
+      )}
+      {stage !== 'finished' && stage !== 'cancled' && (
+        <details className="image-edit">
+          <summary>공연 이미지 변경{event.imageIpfs ? '' : ' (기본 이미지 사용 중)'}</summary>
+          <form className="form-row" noValidate onSubmit={(e) => { e.preventDefault(); if (!imgBlock) saveImage() }}>
+            <ImageField label="새 이미지 CID" hint="비워서 변경하면 기본 이미지로 되돌립니다." error={checkImageCid(img)} value={img} onChange={setImg} fallback={event.image} />
+            <GuardedButton type="submit" busy={busy} reason={imgBlock} aria-label={`${event.title} 이미지 변경`}>{toCid(img) ? '이미지 변경' : '기본 이미지로 되돌리기'}</GuardedButton>
+          </form>
+        </details>
       )}
       {stage !== 'finished' && stage !== 'cancled' && (
         <div className="actions">
@@ -140,7 +156,7 @@ export default function Organizer() {
   const invalid = Object.values(errs).some(Boolean)
 
   if (!address) return <ConnectPrompt title="주최자 콘솔">지갑을 연결하면 공연을 등록하고 관리할 수 있습니다.</ConnectPrompt>
-  if (role === 'owner') return <Empty>관리자 계정은 주최자 콘솔을 사용하지 않습니다. 주최자 승인은 "주최자 승인" 메뉴에서 합니다.</Empty>
+  if (role === 'owner') return <><PageHead title="주최자 콘솔" /><Empty>관리자 계정은 주최자 콘솔을 사용하지 않습니다. 주최자 승인과 기본 이미지 설정은 "관리자" 메뉴에서 합니다.</Empty></>
   if (role === 'user') {
     const requested = status?.[1]
     return (
@@ -171,7 +187,7 @@ export default function Organizer() {
   }
 
   return (
-    <div className="stack">
+    <div className="stack narrow">
       <PageHead title="주최자 콘솔">공연을 등록하고 단계별로 진행합니다.</PageHead>
       <section className="panel">
         <h2>정산</h2>
@@ -189,12 +205,12 @@ export default function Organizer() {
           <Field key={`t${formKey}`} required label="공연 제목" hint={`${MAX_TITLE}자 이하, 중복 제목은 등록할 수 없습니다.`} error={errs.title} value={form.title} onChange={set('title')} maxLength={MAX_TITLE} />
           <Field key={`m${formKey}`} required label="최대 발행량" hint="이 공연에서 발행 가능한 총 티켓 수" error={errs.max} value={form.max} onChange={set('max')} inputMode="numeric" />
           <Field key={`o${formKey}`} required label="지갑당 최대 보유" hint="한 지갑이 가질 수 있는 티켓 수 (최대 발행량 이하)" error={errs.own} value={form.own} onChange={set('own')} inputMode="numeric" />
-          <Field key={`i${formKey}`} label="포스터 이미지 CID" hint="IPFS에 올린 이미지의 CID (선택). 비워 두면 기본 이미지가 쓰입니다." error={errs.image} value={form.image} onChange={set('image')} placeholder="bafkrei…" />
+          <ImageField key={`i${formKey}`} label="포스터 이미지 CID" hint="IPFS에 올린 이미지의 CID (선택). 비워 두면 기본 이미지가 쓰입니다." error={errs.image} value={form.image} onChange={set('image')} />
           <GuardedButton type="submit" busy={busy} reason={invalid ? '입력값을 확인해주세요.' : ''}>등록</GuardedButton>
         </form>
       </section>
 
-      <h2 style={{ marginTop: 'var(--s8)', marginBottom: 'var(--s4)' }}>내 공연 <span className="muted">(최신순 {mine.length}건)</span></h2>
+      <div className="section-head"><h2>내 공연 <span className="muted">(최신순 {mine.length}건)</span></h2></div>
       <ul className="stack">{mine.map((e) => <EventPanel key={e.id} event={e} send={send} busy={busy} />)}</ul>
       {mine.length === 0 && <Empty>등록한 공연이 없습니다. 위 "행사 등록"에서 첫 공연을 만들어보세요.</Empty>}
     </div>

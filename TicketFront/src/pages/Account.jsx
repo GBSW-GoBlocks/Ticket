@@ -40,7 +40,7 @@ export default function Account() {
   const showProceeds = role === 'seller' || proceeds > 0n
 
   return (
-    <div className="stack">
+    <div className="stack narrow">
       <PageHead title="내 계정" />
       <section className="panel profile" aria-label="지갑 정보">
         <div className="avatar" aria-hidden="true" />

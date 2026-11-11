@@ -6,7 +6,7 @@ import { TICKET_ADDRESS, chain } from './wagmi'
 import { friendlyError } from './errors'
 import { txUrl } from './explorer'
 import { useToast } from './toast'
-import { loadEvents, loadTickets, loadSellerRequests, loadActivity } from './api'
+import { loadEvents, loadTickets, loadSellerRequests, loadSellers, loadActivity } from './api'
 
 // 30초 동안 신선하게 두고, 보이는 탭에서는 15초마다 갱신한다. (다른 사용자의 구매 반영)
 const LIVE = { staleTime: 30_000, refetchInterval: 15_000, refetchOnWindowFocus: false }
@@ -26,6 +26,11 @@ export function useTickets() {
 export function useSellerRequests(enabled) {
   const client = usePublicClient()
   return useQuery({ queryKey: ['requests'], queryFn: () => loadSellerRequests(client), enabled, ...LIVE })
+}
+
+export function useSellers(enabled) {
+  const client = usePublicClient()
+  return useQuery({ queryKey: ['sellers'], queryFn: () => loadSellers(client), enabled, ...LIVE })
 }
 
 export function useActivity(address) {
@@ -72,7 +77,7 @@ export function useTx() {
 
   const refresh = () =>
     qc.invalidateQueries({
-      predicate: (q) => ['events', 'tickets', 'requests', 'activity', 'readContract', 'balance'].includes(q.queryKey[0]),
+      predicate: (q) => ['events', 'tickets', 'requests', 'sellers', 'activity', 'readContract', 'balance'].includes(q.queryKey[0]),
     })
 
   // 눌렀던 버튼이 사라져(환불·구매 등) 포커스가 문서 맨 위로 떨어지면 화면 제목으로 옮긴다.

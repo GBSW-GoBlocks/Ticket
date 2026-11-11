@@ -49,7 +49,7 @@ export default function Market() {
   }
 
   return (
-    <>
+    <div className="narrow">
       <PageHead title="티켓 2차 거래">예매가 마감된 공연의 양도 티켓입니다. 최초 예매가 이하로만 거래됩니다.</PageHead>
       <div className="toolbar">
         <div className="field">
@@ -100,6 +100,6 @@ export default function Market() {
           {eventId !== 'all' ? '이 공연에는 양도 중인 티켓이 없습니다. "필터 초기화"를 눌러보세요.' : '구매할 수 있는 양도 티켓이 없습니다.'}
         </Empty>
       )}
-    </>
+    </div>
   )
 }

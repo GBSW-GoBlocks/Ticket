@@ -18,7 +18,7 @@ export default function MyTickets() {
   const { held, stock } = splitMine(tickets, events, address)
 
   return (
-    <>
+    <div className="narrow">
       <PageHead title="내 티켓">{held.length}장을 보유하고 있습니다.</PageHead>
       {isLoading && <Skeleton rows={2} />}
       <ul className="stubs">
@@ -34,6 +34,6 @@ export default function MyTickets() {
       </ul>
       {!isLoading && held.length === 0 && <Empty to="/events" label="공연 둘러보기">보유한 티켓이 없습니다.</Empty>}
       {stock.length > 0 && <p className="muted" style={{ marginTop: 'var(--s4)' }}>내가 주최한 공연의 미판매 재고 {stock.length}장은 주최자 콘솔에서 관리합니다.</p>}
-    </>
+    </div>
   )
 }

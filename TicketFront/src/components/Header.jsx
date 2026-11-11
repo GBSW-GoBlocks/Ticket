@@ -11,7 +11,7 @@ const ROLE_LABEL = { owner: '관리자', seller: '주최자', user: '관람객' 
 
 function roleLink(role) {
   if (role === 'seller') return { to: '/organizer', label: '주최자 콘솔' }
-  if (role === 'owner') return { to: '/admin', label: '주최자 승인' }
+  if (role === 'owner') return { to: '/admin', label: '관리자' }
   return null
 }
 
@@ -109,9 +109,14 @@ export function Footer() {
   return (
     <footer className="footer on-ink">
       <div className="footer-in">
-        <span className="logo">TICKET</span>
-        <span>블록체인 티켓 예매·양도 · 네트워크 {chain.name}</span>
-        <span className="addr-text">티켓 발행 주소 <AddressText address={TICKET_ADDRESS} /></span>
+        <div className="footer-brand">
+          <span className="logo">TICKET</span>
+          <p>블록체인으로 예매하고 안전하게 양도하는 티켓</p>
+        </div>
+        <div className="footer-chain">
+          <span>네트워크 {chain.name}</span>
+          <span className="addr-text">티켓 발행 주소 <AddressText address={TICKET_ADDRESS} /></span>
+        </div>
       </div>
     </footer>
   )

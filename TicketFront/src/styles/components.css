@@ -8,6 +8,8 @@
 .btn.danger-fill { background: var(--danger); border-color: var(--danger); }
 .btn.light { background: #fff; color: var(--v800); border-color: #fff; }
 .btn.light:hover { background: var(--v100); }
+.btn.on-ink { background: transparent; color: #fff; border-color: var(--line-strong); }
+.btn.on-ink:hover { background: rgba(255, 255, 255, .12); border-color: #fff; }
 .btn.block { width: 100%; }
 .btn.is-disabled, .btn.is-disabled:hover { background: var(--surface-sunken); color: #55556a; border-color: #cfcbe0; cursor: not-allowed; }
 .icon-btn { display: inline-flex; align-items: center; justify-content: center; min-width: var(--hit); min-height: var(--hit); border: 0; background: none; color: inherit; border-radius: var(--r-ctl); }
@@ -35,24 +37,30 @@
 .row.end { justify-content: flex-end; }
 .row.top { align-items: flex-start; }
 .actions { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.stack > .section { margin-top: var(--s4); }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s4); }
+.narrow { max-width: 960px; }
 
 /* ---------- 목록(L1 프레임 + 헤어라인) ---------- */
 .listbox { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-1); overflow: hidden; }
 .listbox > li { padding: var(--s4); display: flex; align-items: center; justify-content: space-between; gap: var(--s4); flex-wrap: wrap; }
 .listbox > li + li { border-top: 1px solid var(--line); }
+.listbox > li > .actions { margin-left: auto; justify-content: flex-end; }
 .item-title { font-weight: var(--w-medium); }
 
 /* ---------- 폼 ---------- */
-.field { display: grid; gap: var(--s1); min-width: 180px; }
+.field { display: grid; gap: var(--s1); min-width: 180px; align-content: start; }
 .field label { font-size: var(--fs-sm); font-weight: var(--w-medium); }
 .field input, .field select, select { min-height: var(--hit); padding: 0 var(--s3); border: 1px solid var(--line-strong); border-radius: var(--r-ctl); background: var(--surface); font-size: var(--fs-sm); min-width: 0; transition: border-color var(--dur) var(--ease); }
 .field input:hover, select:hover { border-color: var(--accent); }
 .field input[aria-invalid='true'] { border-color: var(--danger); }
 .field small { min-height: 1.4em; font-size: var(--fs-meta); }
-.inline-form { display: flex; align-items: flex-start; gap: var(--s2); flex-wrap: wrap; }
-.inline-form .btn { margin-top: 26px; }
-.form-row { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: flex-start; }
-.form-row > .btn { margin-top: 26px; }
+/* 폼: 입력은 격자로 맞추고, 실행 버튼은 항상 다음 줄 왼쪽에 둔다. (힌트 줄 수가 달라도 어긋나지 않음) */
+.form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--s4); align-items: start; }
+.form-row > .btn, .form-row > .actions { grid-column: 1 / -1; justify-self: start; }
+.form-row > .hint-inline { grid-column: 1 / -1; }
+.form-row .field { min-width: 0; }
+.form-actions { grid-column: 1 / -1; display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
 .hint { color: var(--danger); font-size: var(--fs-sm); }
 .hint-inline { color: var(--muted); font-size: var(--fs-meta); }
 
@@ -77,7 +85,7 @@
 .poster { aspect-ratio: 3 / 4; border-radius: var(--r-ctl); background: linear-gradient(160deg, var(--v800), var(--v500) 60%, var(--v200)); }
 .poster { overflow: hidden; }
 .poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s4); }
+.event-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--s6) var(--s4); }
 .event-card { display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-1); overflow: hidden; transition: border-color var(--dur) var(--ease); }
 .event-card:hover { border-color: var(--accent); }
 .event-card .poster { border-radius: 0; }
@@ -143,3 +151,9 @@ a.stat:hover { border-color: var(--accent); }
 .console-card details[open] > summary { margin-bottom: var(--s3); }
 .console-card:focus { outline: none; }
 .console-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* 이미지 CID 입력: 왼쪽 미리보기, 오른쪽 입력 */
+.image-setting { grid-column: 1 / -1; max-width: 520px; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: var(--s4); align-items: start; }
+.image-setting .field { min-width: 0; }
+.image-edit > summary { cursor: pointer; font-size: var(--fs-sm); font-weight: var(--w-medium); }
+.image-edit[open] > summary { margin-bottom: var(--s3); }
