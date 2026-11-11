@@ -127,3 +127,39 @@
   .rail .event-card .poster { height: auto; aspect-ratio: 3 / 4; }
   .poster-box { height: 100%; }
 }
+
+/* ---------- 2차 거래 · 내 티켓 ---------- */
+.note-fold { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: 0 var(--s4); margin-bottom: var(--s4); }
+.note-fold > summary { cursor: pointer; min-height: var(--hit); display: flex; align-items: center; font-size: var(--fs-sm); font-weight: var(--w-medium); color: var(--accent-ink); }
+.note-fold[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: var(--s3); }
+.note-fold .notes { padding-bottom: var(--s4); font-size: var(--fs-sm); }
+.toolbar { justify-content: space-between; align-items: center; margin-bottom: var(--s2); }
+.sort-field { margin-left: auto; min-width: 0; }
+.toolbar + .muted { margin-bottom: var(--s3); }
+
+.resale-list { display: grid; gap: var(--s3); }
+.resale-row { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: var(--s4); align-items: center; padding: var(--s3) var(--s4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-1); }
+.resale-thumb { display: block; }
+.resale-thumb .poster, .stub-thumb .poster { border-radius: 6px; }
+.resale-body { display: grid; gap: var(--s1); min-width: 0; }
+.resale-body .item-title { overflow-wrap: anywhere; }
+.resale-body .item-title:hover { color: var(--accent); }
+.resale-price { font-size: var(--fs-h3); font-weight: var(--w-semibold); display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 var(--s2); }
+.resale-price small { font-size: var(--fs-sm); font-weight: var(--w-medium); }
+.resale-price .muted { font-weight: var(--w-regular); }
+.resale-buy { display: grid; gap: var(--s1); justify-items: end; max-width: 220px; text-align: right; }
+.chip-gap-down { background: var(--ok-soft); color: var(--ok); }
+.chip-gap-same { background: var(--surface-sunken); color: var(--muted); }
+
+.tab-body { margin-top: var(--s4); display: grid; gap: var(--s3); }
+.stub { grid-template-columns: 72px minmax(0, 1fr) minmax(0, auto); }
+.stub-thumb { padding: var(--s4) 0 var(--s4) var(--s4); align-self: center; }
+.stub-side { max-width: 360px; }
+
+@media (max-width: 767.98px) {
+  .resale-row { grid-template-columns: 64px minmax(0, 1fr); }
+  .resale-buy { grid-column: 1 / -1; max-width: none; justify-items: stretch; text-align: left; }
+  .resale-buy .btn { width: 100%; }
+  .stub { grid-template-columns: 64px minmax(0, 1fr); }
+  .stub-side { grid-column: 1 / -1; }
+}
