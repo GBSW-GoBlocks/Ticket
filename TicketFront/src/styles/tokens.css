@@ -23,6 +23,14 @@
   --ok: #14612f;
   --ok-soft: #e2f5e9;
   --focus: var(--v900);
+  --on-ink-muted: #cfcaf5;   /* 잉크 면 위의 보조 글자 */
+  --warn: #7a4a00;
+  --warn-soft: #fff3e0;
+  --warn-line: #f5c98a;
+  --neutral: #4a4a57;
+  --neutral-soft: #ececf0;
+  --disabled-text: #55556a;
+  --disabled-line: #cfcbe0;
 
   /* 타이포 */
   --font: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;

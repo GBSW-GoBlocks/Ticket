@@ -11,7 +11,7 @@ export default function Events() {
   return (
     <>
       <PageHead title="공연">진행 상태별로 공연을 찾아보세요.</PageHead>
-      {isLoading && <Skeleton rows={3} />}
+      {isLoading && <Skeleton kind="cards" rows={4} />}
       {!isLoading && events.length === 0 && <Empty>등록된 공연이 없습니다.</Empty>}
       {events.length > 0 && <EventFeed events={events} tickets={tickets} />}
     </>

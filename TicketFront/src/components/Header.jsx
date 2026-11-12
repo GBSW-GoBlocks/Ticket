@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { NavLink, Link, useNavigate } from 'react-router-dom'
-import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useBalance, useDisconnect } from 'wagmi'
 import { useRole } from '../lib/hooks'
 import { chain, TICKET_ADDRESS } from '../lib/wagmi'
 import { short, formatEth } from '../lib/format'
 import AddressText from './AddressText'
 import Icon from './Icon'
+import ConnectButton from './ConnectButton'
 
 const ROLE_LABEL = { owner: '관리자', seller: '주최자', user: '관람객' }
 
@@ -49,7 +50,7 @@ function WalletMenu({ role }) {
       <div className="menu-panel">
         <p className="muted">네트워크 {chain.name}</p>
         <p>잔액 <strong>{balance ? formatEth(balance.value) : '…'} ETH</strong></p>
-        <AddressText address={address} />
+        <AddressText address={address} link />
         <Link className="menu-link" to="/account" onClick={() => close(false)}>내 계정</Link>
         {extra && <Link className="menu-link" to={extra.to} onClick={() => close(false)}>{extra.label}</Link>}
         <button className="menu-link" onClick={() => { close(false); disconnect() }}>연결 해제</button>
@@ -76,7 +77,6 @@ function HeaderSearch() {
 
 export function Header() {
   const { isConnected } = useAccount()
-  const { connect, connectors, isPending } = useConnect()
   const role = useRole()
   const extra = roleLink(role)
 
@@ -93,13 +93,7 @@ export function Header() {
         </nav>
         <HeaderSearch />
         <div className="wallet">
-          {isConnected ? (
-            <WalletMenu role={role} />
-          ) : (
-            <button className="btn" disabled={isPending} onClick={() => connect({ connector: connectors[0] })}>
-              지갑 연결
-            </button>
-          )}
+          {isConnected ? <WalletMenu role={role} /> : <ConnectButton />}
         </div>
       </div>
     </header>
@@ -134,7 +128,7 @@ export function Footer() {
         </div>
         <div className="footer-chain">
           <span>네트워크 {chain.name}</span>
-          <span className="addr-text">티켓 발행 주소 <AddressText address={TICKET_ADDRESS} /></span>
+          <span className="addr-text">티켓 발행 주소 <AddressText address={TICKET_ADDRESS} link /></span>
         </div>
       </div>
     </footer>

@@ -32,11 +32,12 @@ export default function Market() {
   const withListing = events.filter((e) => all.some((r) => r.e.id === e.id))
   const picked = params.get('event')
   const eventId = picked && withListing.some((e) => String(e.id) === picked) ? picked : 'all'
-  const sort = params.get('sort') === 'price' ? 'price' : 'id'
+  // 같은 공연의 티켓은 서로 같으므로 기본은 낮은 가격순이다.
+  const sort = params.get('sort') === 'id' ? 'id' : 'price'
 
   const rows = all
     .filter(({ e }) => eventId === 'all' || e.id === Number(eventId))
-    .sort((a, b) => (sort === 'price' ? (a.t.price < b.t.price ? -1 : 1) : Number(b.t.id - a.t.id)))
+    .sort((a, b) => (sort === 'price' && a.t.price !== b.t.price ? (a.t.price < b.t.price ? -1 : 1) : Number(b.t.id - a.t.id)))
 
   const setParam = (key, value, fallback) => {
     const next = new URLSearchParams(params)
@@ -83,14 +84,14 @@ export default function Market() {
         ) : null}
         <div className="field sort-field">
           <label htmlFor={sortId} className="sr-only">정렬</label>
-          <select id={sortId} value={sort} onChange={(e) => setParam('sort', e.target.value, 'id')}>
-            <option value="id">최신 등록순</option>
+          <select id={sortId} value={sort} onChange={(e) => setParam('sort', e.target.value, 'price')}>
             <option value="price">낮은 가격순</option>
+            <option value="id">티켓 번호 높은순</option>
           </select>
         </div>
       </div>
       <p className="muted" role="status">{rows.length}건의 양도 티켓</p>
-      {isLoading && <Skeleton rows={3} />}
+      {isLoading && <Skeleton kind="stubs" rows={3} />}
       {rows.length > 0 && (
         <ul className="resale-list">
           {rows.map(({ t, e }) => {
@@ -120,7 +121,7 @@ export default function Market() {
       )}
       {!isLoading && rows.length === 0 && (
         <Empty to={eventId !== 'all' ? undefined : '/events'} label="공연 둘러보기">
-          {eventId !== 'all' ? '이 공연에는 양도 중인 티켓이 없습니다. "필터 초기화"를 눌러보세요.' : '구매할 수 있는 양도 티켓이 없습니다.'}
+          {eventId !== 'all' ? '이 공연에는 양도 중인 티켓이 없습니다. 위에서 "전체"를 눌러보세요.' : '구매할 수 있는 양도 티켓이 없습니다. 양도 티켓은 예매가 마감된 공연에서만 나옵니다.'}
         </Empty>
       )}
     </div>

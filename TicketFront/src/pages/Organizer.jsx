@@ -42,10 +42,19 @@ function EventPanel({ event, send, busy }) {
   const step = (fn, label, confirm) => async () => {
     if (!confirm || (await ask(`${event.title}\n${confirm.message}`, { title: confirm.title, confirmLabel: label, danger: true }))) send(fn, [event.title], undefined, `${event.title} ${label}`)
   }
-  const btn = (fn, label, confirm, cls = 'btn ghost') => (
+  // 지금 단계에서 할 수 있는 동작만 보여 준다. 진행 동작이 주 버튼, 행사 취소는 따로 떨어뜨린 위험 버튼이다.
+  const NEXT = {
+    draft: ['startReservation', '예매 시작', { title: '예매를 시작할까요?', message: '예매를 시작하면 티켓을 더 발행할 수 없습니다.' }],
+    reserving: ['finishReservation', '예매 마감', { title: '예매를 마감할까요?', message: '예매를 마감하면 판매되지 않은 티켓이 모두 소멸합니다. 되돌릴 수 없습니다.' }],
+    closed: ['startEvent', '공연 시작', { title: '공연을 시작할까요?', message: '공연을 시작하면 보관 중이던 예매금이 정산 가능 금액으로 옮겨지고, 예매자는 더 이상 환불받을 수 없습니다. 되돌릴 수 없습니다.' }],
+    started: ['finishEvent', '공연 종료', { title: '공연을 종료할까요?', message: '공연을 종료하면 양도 중인 티켓의 판매가 중단됩니다.' }],
+  }
+  const CANCEL = ['cancleEvent', '행사 취소', { title: '행사를 취소할까요?', message: '행사를 취소하면 되돌릴 수 없습니다. 예매자는 "내 티켓"에서 직접 "환불 받기"를 눌러 예매금을 돌려받습니다. 양도된 티켓은 환불되지 않습니다.' }]
+  const btn = ([fn, label, confirm], cls) => (
     <GuardedButton className={cls} busy={busy} reason={actionBlock(fn, event)} aria-label={`${event.title} ${label}`}
       onClick={step(fn, label, confirm)}>{label}</GuardedButton>
   )
+  const cancelBlock = actionBlock('cancleEvent', event)
 
   const mint = async () => {
     const n = Number(amount.trim())
@@ -81,12 +90,9 @@ function EventPanel({ event, send, busy }) {
         </details>
       )}
       {stage !== 'finished' && stage !== 'cancled' && (
-        <div className="actions">
-          {btn('startReservation', '예매 시작', { title: '예매를 시작할까요?', message: '예매를 시작하면 티켓을 더 발행할 수 없습니다.' })}
-          {btn('finishReservation', '예매 마감', { title: '예매를 마감할까요?', message: `예매를 마감하면 판매되지 않은 티켓이 모두 소멸합니다. 되돌릴 수 없습니다.` })}
-          {btn('startEvent', '공연 시작', { title: '공연을 시작할까요?', message: '공연을 시작하면 보관 중이던 예매금이 정산 가능 금액으로 옮겨지고, 예매자는 더 이상 환불받을 수 없습니다. 되돌릴 수 없습니다.' })}
-          {btn('finishEvent', '공연 종료', { title: '공연을 종료할까요?', message: '공연을 종료하면 양도 중인 티켓의 판매가 중단됩니다.' })}
-          {btn('cancleEvent', '행사 취소', { title: '행사를 취소할까요?', message: '행사를 취소하면 되돌릴 수 없습니다. 예매자는 "내 티켓"에서 직접 "환불 받기"를 눌러 예매금을 돌려받습니다. 양도된 티켓은 환불되지 않습니다.' }, 'btn danger')}
+        <div className="step-actions">
+          {NEXT[stage] && <div className="next-step"><span className="meta">다음 단계</span>{btn(NEXT[stage], 'btn')}</div>}
+          {cancelBlock ? <p className="meta">{cancelBlock}</p> : btn(CANCEL, 'btn danger')}
         </div>
       )}
     </>
@@ -199,20 +205,23 @@ export default function Organizer() {
         <p className="muted">예매금은 환불을 위해 공연이 시작되기 전까지 보관되며, 공연 시작 후 정산됩니다.</p>
       </section>
 
-      <section className="panel">
-        <h2>행사 등록</h2>
-        <form className="form-row" noValidate onSubmit={(e) => { e.preventDefault(); if (!invalid) register() }}>
+      {/* 공연이 이미 있으면 등록 폼은 접어 두어 내 공연이 먼저 보이게 한다. 첫 공연 전에는 펼쳐 둔다. */}
+      <details className="panel fold" open={mine.length === 0 ? true : undefined}>
+        <summary><h2>새 공연 등록</h2></summary>
+        <form className="form-stack" noValidate onSubmit={(e) => { e.preventDefault(); if (!invalid) register() }}>
           <Field key={`t${formKey}`} required label="공연 제목" hint={`${MAX_TITLE}자 이하, 중복 제목은 등록할 수 없습니다.`} error={errs.title} value={form.title} onChange={set('title')} maxLength={MAX_TITLE} />
-          <Field key={`m${formKey}`} required label="최대 발행량" hint="이 공연에서 발행 가능한 총 티켓 수" error={errs.max} value={form.max} onChange={set('max')} inputMode="numeric" />
-          <Field key={`o${formKey}`} required label="지갑당 최대 보유" hint="한 지갑이 가질 수 있는 티켓 수 (최대 발행량 이하)" error={errs.own} value={form.own} onChange={set('own')} inputMode="numeric" />
+          <div className="form-pair">
+            <Field key={`m${formKey}`} required label="최대 발행량" hint="이 공연에서 발행 가능한 총 티켓 수" error={errs.max} value={form.max} onChange={set('max')} inputMode="numeric" />
+            <Field key={`o${formKey}`} required label="지갑당 최대 보유" hint="한 지갑이 가질 수 있는 티켓 수 (최대 발행량 이하)" error={errs.own} value={form.own} onChange={set('own')} inputMode="numeric" />
+          </div>
           <ImageField key={`i${formKey}`} label="포스터 이미지 CID" hint="IPFS에 올린 이미지의 CID (선택). 비워 두면 기본 이미지가 쓰입니다." error={errs.image} value={form.image} onChange={set('image')} />
-          <GuardedButton type="submit" busy={busy} reason={invalid ? '입력값을 확인해주세요.' : ''}>등록</GuardedButton>
+          <div className="form-actions"><GuardedButton type="submit" busy={busy} reason={invalid ? '입력값을 확인해주세요.' : ''}>공연 등록</GuardedButton></div>
         </form>
-      </section>
+      </details>
 
       <div className="section-head"><h2>내 공연 <span className="muted">(최신순 {mine.length}건)</span></h2></div>
       <ul className="stack">{mine.map((e) => <EventPanel key={e.id} event={e} send={send} busy={busy} />)}</ul>
-      {mine.length === 0 && <Empty>등록한 공연이 없습니다. 위 "행사 등록"에서 첫 공연을 만들어보세요.</Empty>}
+      {mine.length === 0 && <Empty>등록한 공연이 없습니다. 위 "새 공연 등록"에서 첫 공연을 만들어보세요.</Empty>}
     </div>
   )
 }

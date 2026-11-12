@@ -11,7 +11,7 @@ import BuyBox from '../components/BuyBox'
 import { same, formatEth, parseId } from '../lib/format'
 import { ownedIn } from '../lib/stats'
 import { reserveBlock, resaleBlock } from '../lib/reasons'
-import { STAGE_LABEL, stageOf, isListed } from '../lib/stage'
+import { stageOf, isListed } from '../lib/stage'
 import { usePageTitle } from '../lib/title'
 import { useConfirm } from '../lib/confirm'
 import { confirmReserve, confirmResale } from '../lib/confirmCopy'
@@ -48,7 +48,7 @@ export default function EventDetail() {
 
   const event = id ? events.find((e) => e.id === Number(id)) : null
   usePageTitle(event?.title ?? '공연')
-  if (!event) return isLoading ? <Skeleton rows={2} /> : <Empty to="/events" label="공연 목록으로">공연을 찾을 수 없습니다.</Empty>
+  if (!event) return isLoading ? <Skeleton rows={3} /> : <Empty to="/events" label="공연 목록으로">공연을 찾을 수 없습니다.</Empty>
 
   const stage = stageOf(event)
   const list = tickets.filter((t) => t.eventId === event.id)
@@ -63,6 +63,7 @@ export default function EventDetail() {
   const owned = ownedIn(tickets, event.id, ctx.address)
   const buyBlock = reserveBlock(ctx, event, { hasTicket: !!first, owned })
   const soldOut = event.progress === 0 && open.length === 0
+  const sold = list.filter((t) => !same(t.owner, event.registrant)).length
 
   const reserve = async (t) => {
     if (!(await confirmReserve(ask, t, event))) return
@@ -89,13 +90,24 @@ export default function EventDetail() {
         <div className="detail-info">
           <div className="chip-row">{soldOut ? <SoldOutBadge /> : <StatusBadge event={event} />}</div>
           <h1>{event.title}</h1>
+          <p className="notice" role="note">{NOW[stage]}</p>
+          <dl className="facts">
+            <div><dt>예매 가능</dt><dd>{open.length}<small>장</small></dd></div>
+            <div><dt>양도 중</dt><dd>{resale.length}<small>장</small></dd></div>
+            <div>
+              <dt>지갑당 한도</dt><dd>{event.maxOwnable}<small>장</small></dd>
+              {ctx.address && <dd className="meta">{isRegistrant ? `미판매 재고 ${owned}장` : `내 보유 ${owned}장`}</dd>}
+            </div>
+          </dl>
+          {stage === 'reserving' && list.length > 0 && (
+            <div className="sold">
+              <div className="sold-bar" aria-hidden="true"><span style={{ width: `${Math.round((sold / list.length) * 100)}%` }} /></div>
+              <p className="meta">전체 {list.length}장 중 {sold}장 예매됨</p>
+            </div>
+          )}
           <dl className="kv">
-            <dt>주최</dt><dd><AddressText address={event.registrant} /></dd>
-            <dt>진행 단계</dt><dd>{STAGE_LABEL[stage]}</dd>
+            <dt>주최</dt><dd><AddressText address={event.registrant} link /></dd>
             <dt>발행</dt><dd>{event.minted}장 / 최대 {event.maxMinted}장</dd>
-            <dt>현재 유통</dt><dd>{list.length}장 (예매 가능 {open.length} · 양도 중 {resale.length})</dd>
-            <dt>지갑당 한도</dt>
-            <dd>최대 {event.maxOwnable}장{ctx.address && (isRegistrant ? ` · 주최자 미판매 재고 ${owned}장` : ` · 내 보유 ${owned}장`)}</dd>
           </dl>
         </div>
         <BuyBox variant="panel" {...boxProps} />
@@ -108,7 +120,6 @@ export default function EventDetail() {
         <div role="tabpanel" id="ev-panel" aria-labelledby={`ev-${tab}`}>
           {tab === 'info' && (
             <div className="stack">
-              <p className="notice" role="note"><strong>지금 상태</strong> {NOW[stage]}</p>
               <h2>예매 유의사항</h2>
               <ul className="notes">{NOTICES.map((n) => <li key={n}>{n}</li>)}</ul>
             </div>

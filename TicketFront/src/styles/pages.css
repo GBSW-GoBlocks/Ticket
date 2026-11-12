@@ -1,8 +1,13 @@
 /* ---------- 홈 히어로(H2 + C3 잉크 밴드) ---------- */
 .band { background: var(--ink); color: #fff; border-radius: var(--r-card); }
-.hero { display: grid; grid-template-columns: 1fr auto; gap: var(--s8); align-items: center; padding: var(--s8) var(--s6); }
+/* 글 · 포스터 · 버튼 세 구역. 데스크톱은 포스터가 오른쪽에 두 줄을 차지하고, 모바일은 글 옆에 작게 붙는다. */
+.hero { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'text poster' 'meta poster'; gap: var(--s6) var(--s8); align-items: center; padding: var(--s8) var(--s6); }
+.hero.no-poster { grid-template-columns: 1fr; grid-template-areas: 'text' 'meta'; }
+.hero-text { grid-area: text; align-self: end; }
+.hero-poster { grid-area: poster; display: block; }
+.hero-meta { grid-area: meta; align-self: start; }
 .hero h1 { font-size: var(--fs-display); line-height: var(--lh-tight); margin-bottom: var(--s3); max-width: 22ch; }
-.hero p { color: #cfcaf5; margin-bottom: var(--s6); max-width: 52ch; }
+.hero p { color: var(--on-ink-muted); max-width: 52ch; }
 .hero .chip-row { margin-bottom: var(--s3); }
 .hero .chip { background: rgba(255, 255, 255, .14); color: #fff; }
 .hero .poster { width: 180px; }
@@ -21,9 +26,11 @@
 .notes { color: var(--muted); display: grid; gap: var(--s2); padding-left: var(--s4); list-style: disc; max-width: 70ch; }
 
 /* ---------- 티켓 상세 ---------- */
-.ticket-hero { background: var(--ink); color: #fff; border-radius: var(--r-card); padding: var(--s6); display: grid; gap: var(--s2); align-content: start; }
+.ticket-hero { background: var(--ink); color: #fff; border-radius: var(--r-card); overflow: hidden; display: grid; align-content: start; }
+.ticket-hero .poster { border-radius: 0; }
+.ticket-hero-body { padding: var(--s6); display: grid; gap: var(--s2); align-content: start; }
 .ticket-hero .no { font-size: var(--fs-h1); font-weight: var(--w-semibold); }
-.ticket-hero p { color: #cfcaf5; font-size: var(--fs-sm); }
+.ticket-hero p { color: var(--on-ink-muted); font-size: var(--fs-sm); }
 .split-2 { display: grid; grid-template-columns: 280px 1fr; gap: var(--s8); align-items: start; }
 
 /* ---------- 계정 ---------- */
@@ -38,9 +45,10 @@
 
 /* ---------- 모바일 ---------- */
 @media (max-width: 767.98px) {
-  .hero { grid-template-columns: 1fr; padding: var(--s6) var(--s4); gap: var(--s4); }
-  .hero h1 { font-size: var(--fs-h1); }
-  .hero .poster { display: none; }
+  .hero { grid-template-columns: 1fr 88px; grid-template-areas: 'text poster' 'meta meta'; padding: var(--s6) var(--s4); gap: var(--s4); align-items: start; }
+  .hero-text { align-self: start; }
+  .hero h1 { font-size: var(--fs-h2); }
+  .hero .poster { width: 88px; }
   .event-grid { grid-template-columns: 1fr; gap: var(--s3); }
   .event-card { grid-template-columns: 80px 1fr; }
   .event-card .poster { height: 100%; aspect-ratio: auto; min-height: 104px; }
@@ -53,8 +61,12 @@
   .split-2 { grid-template-columns: 1fr; gap: var(--s4); }
   .stub { grid-template-columns: 1fr; }
   .stub-side { border-left: 0; border-top: 2px dashed var(--line); max-width: none; justify-content: flex-start; }
-  .detail > .poster-wrap { grid-column: 1; }
-  .detail > .detail-info { grid-column: 2; }
+  /* 포스터 옆에는 상태와 제목만 두고, 안내·수치·정보는 화면 폭을 다 쓴다. */
+  .detail > .detail-info { display: contents; }
+  .detail > .poster-wrap { grid-column: 1; grid-row: 1 / span 2; }
+  .detail > .detail-info > .chip-row { grid-column: 2; align-self: end; }
+  .detail > .detail-info > h1 { grid-column: 2; align-self: start; font-size: var(--fs-h2); }
+  .detail > .detail-info > :not(.chip-row):not(h1) { grid-column: 1 / -1; }
   .kv { grid-template-columns: 88px 1fr; }
 }
 
@@ -87,12 +99,16 @@
 }
 
 /* ---------- 재정립: 목록 도구줄 · 포스터 카드 · 홈 레일 · 상세 고정 탭 ---------- */
-.hsearch { flex: 0 1 280px; margin-left: auto; }
+/* 헤더 검색은 메뉴와 지갑 사이 가운데에 둔다. */
+.hsearch { flex: 1 1 auto; max-width: 420px; margin-inline: auto; }
 .hsearch + .wallet { margin-left: 0; }
 .hsearch input, .feed-find input { width: 100%; min-height: var(--hit); padding: 0 var(--s4); border: 1px solid var(--line-strong); border-radius: 999px; background: var(--surface); font-size: var(--fs-sm); }
 .hsearch input:hover, .feed-find input:hover { border-color: var(--accent); }
 
-.feed-tools { display: flex; align-items: center; justify-content: space-between; gap: var(--s3) var(--s4); flex-wrap: wrap; }
+.feed-tools { display: grid; gap: var(--s3); }
+.feed-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s2) var(--s4); flex-wrap: wrap; }
+.feed-count { display: flex; align-items: center; gap: var(--s1); }
+.chips .count { font-weight: var(--w-regular); }
 .feed-find { display: flex; gap: var(--s2); flex: 1 1 320px; justify-content: flex-end; }
 .feed-find .field { min-width: 0; }
 .feed-find .field:first-child { flex: 1 1 200px; max-width: 320px; }
@@ -112,6 +128,19 @@
 .section-head .more:hover { text-decoration: underline; }
 .rail { display: flex; gap: var(--s4); overflow-x: auto; padding-bottom: var(--s2); scroll-snap-type: x proximity; scrollbar-width: thin; }
 .rail > li { flex: 0 0 200px; scroll-snap-align: start; display: grid; }
+/* 데스크톱: 옆으로 넘기지 않고 한 줄 격자로 보여 준다. 줄에 안 들어가는 카드는 숨기고 "전체 보기"로 보낸다. */
+@media (min-width: 768px) {
+  .rail { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); overflow: visible; padding-bottom: 0; }
+  .rail > li:nth-child(n + 5) { display: none; }
+}
+@media (min-width: 1024px) {
+  .rail { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .rail > li:nth-child(5) { display: grid; }
+}
+@media (min-width: 1200px) {
+  .rail { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .rail > li:nth-child(6) { display: grid; }
+}
 
 /* 상세: 탭은 헤더 아래에 붙어 따라온다. 목록 길이와 상관없이 구역 이동이 가능하다. */
 .detail ~ .after-section .tabs { position: sticky; top: var(--header-h); z-index: 15; background: var(--canvas); }
@@ -122,7 +151,8 @@
   .feed-find { flex-basis: 100%; justify-content: stretch; }
   .feed-find .field:first-child { max-width: none; }
   .tabbar { grid-template-columns: repeat(5, 1fr); }
-  .rail > li { flex-basis: 160px; }
+  /* 다음 카드가 조금 걸쳐 보여 더 있음을 알린다. */
+  .rail > li { flex-basis: 44%; }
   .rail .event-card { grid-template-columns: 1fr; }
   .rail .event-card .poster { height: auto; aspect-ratio: 3 / 4; }
   .poster-box { height: 100%; }
@@ -162,4 +192,31 @@
   .resale-buy .btn { width: 100%; }
   .stub { grid-template-columns: 64px minmax(0, 1fr); }
   .stub-side { grid-column: 1 / -1; }
+}
+
+/* ---------- 재구성: 홈 요약·이용 방법, 상세 수치, 티켓 상세 ---------- */
+.my-strip { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); box-shadow: var(--shadow-1); padding: var(--s3) var(--s4); }
+.my-strip .todo { color: var(--accent-ink); font-weight: var(--w-medium); }
+
+.howto { display: grid; gap: var(--s4); }
+.howto ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); }
+.howto li { display: flex; gap: var(--s3); align-items: flex-start; }
+.howto-no { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-ink); font-size: var(--fs-sm); font-weight: var(--w-semibold); display: grid; place-items: center; }
+
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s2); }
+.facts > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-ctl); padding: var(--s3); display: grid; gap: 2px; align-content: start; }
+.facts dt { color: var(--muted); font-size: var(--fs-meta); }
+.facts dd { font-size: var(--fs-h2); font-weight: var(--w-semibold); line-height: 1.2; }
+.facts dd small { font-size: var(--fs-sm); font-weight: var(--w-medium); margin-left: 2px; }
+.facts dd.meta { font-size: var(--fs-meta); font-weight: var(--w-regular); }
+.sold { display: grid; gap: var(--s1); }
+.sold-bar { height: 8px; border-radius: 999px; background: var(--surface-sunken); overflow: hidden; }
+.sold-bar span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+
+@media (max-width: 767.98px) {
+  .howto ol { grid-template-columns: 1fr; gap: var(--s3); }
+  .form-pair { grid-template-columns: 1fr; }
+  .ticket-hero { grid-template-columns: 96px minmax(0, 1fr); align-items: start; }
+  .ticket-hero-body { padding: var(--s4); }
+  .tx-steps { flex-basis: 100%; }
 }

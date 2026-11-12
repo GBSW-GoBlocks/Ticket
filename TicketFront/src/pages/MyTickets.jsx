@@ -42,7 +42,7 @@ export default function MyTickets() {
       <Tabs idPrefix="my" value={tab} onChange={setTab}
         tabs={[{ key: 'held', label: `보유 중 ${groups.held.length}` }, { key: 'selling', label: `양도 중 ${groups.selling.length}` }, { key: 'past', label: `지난 티켓 ${groups.past.length}` }]} />
       <div role="tabpanel" id="my-panel" aria-labelledby={`my-${tab}`} className="tab-body">
-        {isLoading && <Skeleton rows={2} />}
+        {isLoading && <Skeleton kind="stubs" rows={2} />}
         <ul className="stubs">
           {shown.map((t) => {
             const event = eventOf(t)

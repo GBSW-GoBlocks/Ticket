@@ -1,10 +1,15 @@
 import { same } from './format'
 
-// 행사별 예매 가능 티켓 수와 최저가
+const lowest = (list) => (list.length ? list.map((t) => t.price).reduce((a, b) => (a < b ? a : b)) : null)
+
+// 행사별 예매 가능 티켓 수·최저가, 양도 매물 수·최저 양도가
 export function eventStats(event, tickets) {
   const open = tickets.filter((t) => t.eventId === event.id && t.onSale && same(t.owner, event.registrant))
-  const minPrice = open.length ? open.map((t) => t.price).reduce((a, b) => (a < b ? a : b)) : null
-  return { open: open.length, minPrice }
+  const minPrice = lowest(open)
+  // 양도 매물: 예매 마감 후 공연 시작 전, 주최자가 아닌 보유자가 내놓은 티켓
+  const resaleOpen = event.progress === 1 && event.reserved
+  const resale = resaleOpen ? tickets.filter((t) => t.eventId === event.id && t.onSale && !same(t.owner, event.registrant)) : []
+  return { open: open.length, minPrice, resale: resale.length, resaleMin: lowest(resale) }
 }
 
 // 내 티켓 = 보유 티켓. 주최자가 자기 행사에서 들고 있는 미판매 재고는 따로 센다.

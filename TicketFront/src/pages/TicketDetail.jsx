@@ -3,6 +3,7 @@ import { useEvents, useTickets, useTx, useWalletContext } from '../lib/hooks'
 import { StatusBadge, Empty, Skeleton, Hint } from '../components/ui'
 import AddressText from '../components/AddressText'
 import TicketActions from '../components/TicketActions'
+import Poster from '../components/Poster'
 import GuardedButton from '../components/GuardedButton'
 import { same, formatEth, parseId } from '../lib/format'
 import { ownedIn } from '../lib/stats'
@@ -63,24 +64,30 @@ export default function TicketDetail() {
 
   return (
     <>
-      <p className="crumb"><Link to="/my">내 티켓</Link> › 티켓 #{id}</p>
+      {/* 내 티켓이면 내 티켓에서, 아니면 공연에서 들어온 길을 보여 준다. */}
+      <p className="crumb">
+        {mine ? <Link to="/my">내 티켓</Link> : <><Link to="/events">공연</Link>{event && <> › <Link to={`/events/${event.id}`}>{event.title}</Link></>}</>} › 티켓 #{id}
+      </p>
       <div className="split-2">
         <div className="ticket-hero on-ink">
-          <span>{event?.title ?? `행사 #${ticket.eventId}`}</span>
-          <strong className="no">티켓 #{id}</strong>
-          <p>{ownerLine(ticket, event, mine, primary, listed)}</p>
-          {stage && !ticket.used && <p>{GUIDE[stage]}</p>}
+          <Poster src={event?.image} />
+          <div className="ticket-hero-body">
+            <span>{event?.title ?? `행사 #${ticket.eventId}`}</span>
+            <strong className="no">티켓 #{id}</strong>
+            <p>{ownerLine(ticket, event, mine, primary, listed)}</p>
+            {stage && !ticket.used && <p>{GUIDE[stage]}</p>}
+          </div>
         </div>
         <div className="detail-info">
-          {event && <StatusBadge event={event} />}
+          {event && <div className="chip-row"><StatusBadge event={event} /></div>}
           <h1>{event?.title ?? `티켓 #${id}`}</h1>
           <dl className="kv">
             <dt>티켓 번호</dt><dd>#{id}</dd>
             <dt>가격</dt><dd>{ticketPriceText(ticket, event)}</dd>
             <dt>상태</dt><dd>{status}</dd>
-            <dt>소유자</dt><dd><AddressText address={ticket.owner} />{mine && ' (나)'}</dd>
+            <dt>소유자</dt><dd><AddressText address={ticket.owner} link />{mine && ' (나)'}</dd>
             <dt>주최</dt><dd><AddressText address={event?.registrant} /></dd>
-            <dt>발행 주소</dt><dd><AddressText address={TICKET_ADDRESS} /></dd>
+            <dt>발행 주소</dt><dd><AddressText address={TICKET_ADDRESS} link /></dd>
           </dl>
           <div className="actions">
             {mine && <TicketActions ticket={ticket} event={event} send={send} busy={busy} onDone={() => navigate('/my')} />}
