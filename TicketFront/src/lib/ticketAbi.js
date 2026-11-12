@@ -31,8 +31,14 @@ export const ticketAbi = parseAbi([
   'function viewTicketPrice(uint256 _ticketId) view returns (uint256)',
   'function viewTicketsOnSale() view returns (uint256[])',
   'function ownerOf(uint256 tokenId) view returns (address)',
-  'struct TicketInfo { uint256 eventId; uint256 price; uint256 reservationPrice; bool isOnSale; bool isTraded; bool isUsed; }',
-  'struct EventInfo { string title; uint256 eventId; address registrant; string imageIpfs; uint8 progressInfo; uint256 maxMintedTicketAmount; uint256 mintedTicketAmount; uint256 maxOwnableTicketAmount; bool reserved; }',
+  // [What I did]
+  // 'struct TicketInfo { uint256 eventId; uint256 price; uint256 reservationPrice; bool isOnSale; bool isTraded; bool isUsed; }',
+  // [What Claude did] 컨트랙트 가스 최적화(슬롯 패킹)로 바뀐 구조체 타입·필드 순서에 맞췄다.
+  'struct TicketInfo { uint64 eventId; bool isOnSale; bool isTraded; bool isUsed; uint128 price; uint128 reservationPrice; }',
+  // [What I did]
+  // 'struct EventInfo { string title; uint256 eventId; address registrant; string imageIpfs; uint8 progressInfo; uint256 maxMintedTicketAmount; uint256 mintedTicketAmount; uint256 maxOwnableTicketAmount; bool reserved; }',
+  // [What Claude did] 컨트랙트 가스 최적화(슬롯 패킹)로 바뀐 구조체 타입·필드 순서에 맞췄다.
+  'struct EventInfo { string title; string imageIpfs; address registrant; uint8 progressInfo; bool reserved; uint64 eventId; uint16 maxMintedTicketAmount; uint16 mintedTicketAmount; uint32 maxOwnableTicketAmount; }',
   'function claimRefund(uint256 _ticketId)',
   'function ticketDetail(uint256 _ticketId) view returns (TicketInfo)',
   'function viewEvent(uint256 _eventId) view returns (EventInfo)',

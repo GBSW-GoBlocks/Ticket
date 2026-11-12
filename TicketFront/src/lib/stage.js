@@ -16,7 +16,6 @@ export const STAGE_LABEL = {
   finished: '종료',
   cancled: '취소',
 }
-export const STAGE_ICON = { draft: '○', reserving: '●', closed: '◐', started: '▶', finished: '■', cancled: '✕' }
 export const STAGE_ORDER = ['reserving', 'closed', 'started', 'draft', 'finished', 'cancled']
 
 // 동작별로 허용되는 단계

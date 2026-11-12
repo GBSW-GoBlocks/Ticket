@@ -1,8 +1,8 @@
 import { zeroAddress } from 'viem'
 import { same } from './format'
 import { ticketAbi } from './ticketAbi'
-import { ipfsUrl } from './ipfs'
-import { TICKET_ADDRESS, DEPLOY_BLOCK } from './wagmi'
+import { ipfsUrls } from './ipfs'
+import { TICKET_ADDRESS, DEPLOY_BLOCK, logsClient } from './wagmi'
 
 const base = { address: TICKET_ADDRESS, abi: ticketAbi }
 const PAGE = 200n
@@ -22,7 +22,7 @@ export async function loadEvents(client) {
     title: e.title,
     registrant: e.registrant,
     imageIpfs: e.imageIpfs,
-    image: ipfsUrl(e.imageIpfs || defaultImage),
+    image: ipfsUrls(e.imageIpfs || defaultImage),
     progress: Number(e.progressInfo),
     maxMinted: Number(e.maxMintedTicketAmount),
     minted: Number(e.mintedTicketAmount),
@@ -56,7 +56,7 @@ export async function loadTickets(client) {
 
 // 관리자 승인 대기 목록: SellerRequested 로그의 주소 중 아직 신청 상태인 주소
 export async function loadSellerRequests(client) {
-  const logs = await client.getContractEvents({ ...base, eventName: 'SellerRequested', fromBlock: DEPLOY_BLOCK })
+  const logs = await (logsClient ?? client).getContractEvents({ ...base, eventName: 'SellerRequested', fromBlock: DEPLOY_BLOCK })
   const users = [...new Set(logs.map((l) => l.args.user))]
   const states = await Promise.all(
     users.map((u) => client.readContract({ ...base, functionName: 'sellerStatus', args: [u] })),
@@ -64,14 +64,25 @@ export async function loadSellerRequests(client) {
   return users.filter((_, i) => states[i][1])
 }
 
+// 현재 주최자 목록: SellerApproved 로그의 주소 중 지금도 주최자인 주소 (회수된 주소는 빠진다)
+export async function loadSellers(client) {
+  const logs = await (logsClient ?? client).getContractEvents({ ...base, eventName: 'SellerApproved', fromBlock: DEPLOY_BLOCK })
+  const users = [...new Set(logs.map((l) => l.args.seller))]
+  const states = await Promise.all(
+    users.map((u) => client.readContract({ ...base, functionName: 'sellerStatus', args: [u] })),
+  )
+  return users.filter((_, i) => states[i][0])
+}
+
 // 내 최근 거래: 예매·양도 구매·환불은 내가 buyer 인 이벤트, 양도 판매는 내가 보낸 Transfer 와 같은 트랜잭션의 TicketResold 로 찾는다.
 export async function loadActivity(client, address) {
   const fromBlock = DEPLOY_BLOCK
+  const lc = logsClient ?? client
   const [reserved, resold, refunded, sent] = await Promise.all([
-    client.getContractEvents({ ...base, eventName: 'TicketReserved', args: { buyer: address }, fromBlock }),
-    client.getContractEvents({ ...base, eventName: 'TicketResold', fromBlock }),
-    client.getContractEvents({ ...base, eventName: 'TicketRefunded', args: { buyer: address }, fromBlock }),
-    client.getContractEvents({ ...base, eventName: 'Transfer', args: { from: address }, fromBlock }),
+    lc.getContractEvents({ ...base, eventName:'TicketReserved', args: { buyer: address }, fromBlock }),
+    lc.getContractEvents({ ...base, eventName:'TicketResold', fromBlock }),
+    lc.getContractEvents({ ...base, eventName:'TicketRefunded', args: { buyer: address }, fromBlock }),
+    lc.getContractEvents({ ...base, eventName:'Transfer', args: { from: address }, fromBlock }),
   ])
   const rows = []
   reserved.forEach((l) => rows.push({ kind: 'reserve', ticketId: l.args.ticketId, amount: l.args.price, block: l.blockNumber, key: `${l.transactionHash}-r` }))

@@ -5,3 +5,8 @@ export const txUrl = (hash) => {
   const base = chain.blockExplorers?.default?.url
   return base ? `${base}/tx/${hash}` : null
 }
+
+export const addressUrl = (address) => {
+  const base = chain.blockExplorers?.default?.url
+  return base && address ? `${base}/address/${address}` : null
+}

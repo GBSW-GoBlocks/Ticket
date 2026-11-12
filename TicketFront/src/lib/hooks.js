@@ -6,7 +6,7 @@ import { TICKET_ADDRESS, chain } from './wagmi'
 import { friendlyError } from './errors'
 import { txUrl } from './explorer'
 import { useToast } from './toast'
-import { loadEvents, loadTickets, loadSellerRequests, loadActivity } from './api'
+import { loadEvents, loadTickets, loadSellerRequests, loadSellers, loadActivity } from './api'
 
 // 30초 동안 신선하게 두고, 보이는 탭에서는 15초마다 갱신한다. (다른 사용자의 구매 반영)
 const LIVE = { staleTime: 30_000, refetchInterval: 15_000, refetchOnWindowFocus: false }
@@ -26,6 +26,11 @@ export function useTickets() {
 export function useSellerRequests(enabled) {
   const client = usePublicClient()
   return useQuery({ queryKey: ['requests'], queryFn: () => loadSellerRequests(client), enabled, ...LIVE })
+}
+
+export function useSellers(enabled) {
+  const client = usePublicClient()
+  return useQuery({ queryKey: ['sellers'], queryFn: () => loadSellers(client), enabled, ...LIVE })
 }
 
 export function useActivity(address) {
@@ -72,7 +77,7 @@ export function useTx() {
 
   const refresh = () =>
     qc.invalidateQueries({
-      predicate: (q) => ['events', 'tickets', 'requests', 'activity', 'readContract', 'balance'].includes(q.queryKey[0]),
+      predicate: (q) => ['events', 'tickets', 'requests', 'sellers', 'activity', 'readContract', 'balance'].includes(q.queryKey[0]),
     })
 
   // 눌렀던 버튼이 사라져(환불·구매 등) 포커스가 문서 맨 위로 떨어지면 화면 제목으로 옮긴다.
@@ -91,26 +96,26 @@ export function useTx() {
     lock.current = true
     setBusy(true)
     toast.clearErrors() // 새 요청이 시작되면 이전 오류는 지운다.
-    const id = toast.push({ kind: 'info', text: `${label}: 확인하는 중입니다…`, sticky: true })
+    const id = toast.push({ kind: 'info', text: `${label}: 확인하는 중입니다…`, sticky: true, step: 1 })
     try {
       const call = { address: TICKET_ADDRESS, abi: ticketAbi, functionName, args, value }
       // 실패할 거래는 서명(가스 소모) 전에 사유를 보여준다.
       await client.simulateContract({ ...call, account: address })
-      toast.update(id, { text: `${label}: 지갑에서 서명해주세요.` })
+      toast.update(id, { text: `${label}: 지갑에서 서명해주세요.`, step: 2 })
       const hash = await writeContractAsync(call)
-      toast.update(id, { text: `${label}: 블록에 기록되는 중입니다…`, link: txUrl(hash) })
+      toast.update(id, { text: `${label}: 블록에 기록되는 중입니다…`, link: txUrl(hash), step: 3 })
       const receipt = await client.waitForTransactionReceipt({ hash })
       if (receipt.status !== 'success') {
         throw new Error('처리되지 않았습니다. 최신 상태를 확인한 뒤 다시 시도해주세요. 가스비가 청구되었을 수 있습니다.')
       }
       await refresh()
-      toast.update(id, { kind: 'ok', text: `${label}: 완료되었습니다.`, sticky: false, action: opts.action })
+      toast.update(id, { kind: 'ok', text: `${label}: 완료되었습니다.`, sticky: false, action: opts.action, step: null })
       restoreFocus()
       return true
     } catch (e) {
       // 실패해도 화면이 오래된 데이터일 수 있으니(이미 팔린 티켓 등) 목록을 바로 다시 읽는다.
       refresh()
-      toast.update(id, { kind: 'error', text: `${label}: ${friendlyError(e)}`, sticky: true, link: null })
+      toast.update(id, { kind: 'error', text: `${label}: ${friendlyError(e)}`, sticky: true, link: null, step: null })
       return false
     } finally {
       lock.current = false

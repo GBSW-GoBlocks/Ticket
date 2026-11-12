@@ -13,3 +13,13 @@ export function ticketPriceText(ticket, event) {
   }
   return `최초 예매가 ${formatEth(ticket.reservationPrice)} ETH`
 }
+
+// 양도가가 최초 예매가와 얼마나 다른지. 양도가는 최초 예매가를 넘을 수 없으므로 "그대로" 또는 "낮음"만 나온다.
+export function priceGap(ticket) {
+  const base = ticket.reservationPrice
+  if (!base || base <= 0n) return null
+  if (ticket.price === base) return { tone: 'same', text: '원가 그대로' }
+  if (ticket.price > base) return null
+  const pct = Number(((base - ticket.price) * 100n) / base)
+  return { tone: 'down', text: pct >= 1 ? `원가보다 ${pct}% 저렴` : '원가보다 저렴' }
+}

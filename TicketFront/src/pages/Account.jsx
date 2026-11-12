@@ -3,7 +3,7 @@ import { useAccount, useBalance, useDisconnect, useReadContract } from 'wagmi'
 import { useActivity, useEvents, useRole, useTickets, useTx } from '../lib/hooks'
 import { ticketAbi } from '../lib/ticketAbi'
 import { TICKET_ADDRESS, chain } from '../lib/wagmi'
-import { Empty, Skeleton, PageHead, ConnectPrompt } from '../components/ui'
+import { PageHead, ConnectPrompt } from '../components/ui'
 import AddressText from '../components/AddressText'
 import GuardedButton from '../components/GuardedButton'
 import { same, formatEth } from '../lib/format'
@@ -22,7 +22,7 @@ export default function Account() {
   const role = useRole()
   const { send, busy } = useTx()
   const { data: events = [] } = useEvents()
-  const { data: tickets = [], isLoading } = useTickets()
+  const { data: tickets = [] } = useTickets()
   const { data: balance } = useBalance({ address })
   const { data: activity = [] } = useActivity(address)
   const read = (functionName, args) => ({
@@ -40,13 +40,13 @@ export default function Account() {
   const showProceeds = role === 'seller' || proceeds > 0n
 
   return (
-    <div className="stack">
+    <div className="stack narrow">
       <PageHead title="내 계정" />
       <section className="panel profile" aria-label="지갑 정보">
         <div className="avatar" aria-hidden="true" />
         <div className="profile-body">
           <span className="chip-row"><span className="chip">{ROLE_LABEL[role] ?? '…'}</span></span>
-          <AddressText address={address} full />
+          <AddressText address={address} full link />
           <p className="muted">네트워크 {chain.name} · 잔액 {balance ? formatEth(balance.value) : '…'} ETH</p>
         </div>
         <button className="btn ghost" onClick={() => disconnect()}>연결 해제</button>
@@ -89,25 +89,6 @@ export default function Account() {
             })}
           </ul>
         ) : <p className="muted">아직 거래 내역이 없습니다.</p>}
-      </section>
-
-      <section className="section" aria-labelledby="acc-tickets">
-        <h2 id="acc-tickets">보유 티켓</h2>
-        {isLoading && <Skeleton rows={2} />}
-        {held.length > 0 && (
-          <ul className="listbox">
-            {held.map((t) => {
-              const e = events.find((x) => x.id === t.eventId)
-              return (
-                <li key={t.id}>
-                  <div><span className="item-title">#{t.id.toString()}</span><span className="muted"> · {e?.title}</span></div>
-                  <Link className="btn ghost" to={`/tickets/${t.id}`} aria-label={`티켓 #${t.id} 상세`}>상세</Link>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-        {!isLoading && held.length === 0 && <Empty to="/events" label="공연 둘러보기">보유한 티켓이 없습니다.</Empty>}
       </section>
     </div>
   )
