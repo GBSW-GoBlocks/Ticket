@@ -9,7 +9,6 @@ import Stepper from '../components/Stepper'
 import Field from '../components/Field'
 import ImageField from '../components/ImageField'
 import GuardedButton from '../components/GuardedButton'
-import AddressText from '../components/AddressText'
 import { StatusBadge } from '../components/ui'
 import { same, formatEth } from '../lib/format'
 import { checkEth, checkInt, checkText } from '../lib/validate'
@@ -120,7 +119,7 @@ function EventPanel({ event, send, busy }) {
 }
 
 export default function Organizer() {
-  usePageTitle('주최자 콘솔')
+  usePageTitle('주최 공연')
   const { address } = useAccount()
   const role = useRole()
   const { data: events = [] } = useEvents()
@@ -133,7 +132,6 @@ export default function Organizer() {
 
   const read = (functionName, args) => ({ address: TICKET_ADDRESS, abi: ticketAbi, functionName, args, query: { enabled: !!address, ...LIVE_READ } })
   const { data: proceeds = 0n } = useReadContract(read('withdrawableBalance', [address]))
-  const { data: status } = useReadContract(read('sellerStatus', [address]))
 
   const mine = events.filter((e) => same(e.registrant, address)).sort((a, b) => b.id - a.id)
 
@@ -161,28 +159,8 @@ export default function Organizer() {
   }
   const invalid = Object.values(errs).some(Boolean)
 
-  if (!address) return <ConnectPrompt title="주최자 콘솔">지갑을 연결하면 공연을 등록하고 관리할 수 있습니다.</ConnectPrompt>
-  if (role === 'owner') return <><PageHead title="주최자 콘솔" /><Empty>관리자 계정은 주최자 콘솔을 사용하지 않습니다. 주최자 승인과 기본 이미지 설정은 "관리자" 메뉴에서 합니다.</Empty></>
-  if (role === 'user') {
-    const requested = status?.[1]
-    return (
-      <>
-        <PageHead title="주최자 신청" />
-        {requested ? (
-          <div role="status">
-            <p className="notice">신청이 접수되었습니다. 관리자가 승인하면 이 화면이 자동으로 공연 등록 화면으로 바뀝니다. (15초마다 확인)</p>
-            <p className="muted">관리자에게 아래 주소로 신청했다고 알려주세요.</p>
-            <AddressText address={address} full />
-          </div>
-        ) : (
-          <>
-            <p className="notice">공연을 등록하려면 주최자 권한이 필요합니다. 신청 후 관리자의 승인을 기다려주세요.</p>
-            <GuardedButton busy={busy} onClick={() => send('requestSeller', [], undefined, '주최자 신청')}>주최자 신청</GuardedButton>
-          </>
-        )}
-      </>
-    )
-  }
+  if (!address) return <ConnectPrompt title="주최 공연">지갑을 연결하면 공연을 등록하고 관리할 수 있습니다.</ConnectPrompt>
+  if (role !== 'seller') return <><PageHead title="주최 공연" /><Empty>주최자 권한이 필요합니다. 주최자 신청은 "내 계정"에서 할 수 있습니다.</Empty></>
 
   const register = async () => {
     const ok = await send('addEvent', [title, BigInt(form.max.trim()), BigInt(form.own.trim()), toCid(form.image)], undefined, `행사 "${title}" 등록`)
@@ -194,7 +172,7 @@ export default function Organizer() {
 
   return (
     <div className="stack narrow">
-      <PageHead title="주최자 콘솔">공연을 등록하고 단계별로 진행합니다.</PageHead>
+      <PageHead title="주최 공연">공연을 등록하고 단계별로 진행합니다.</PageHead>
       <section className="panel">
         <h2>정산</h2>
         <div className="row">

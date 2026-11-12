@@ -55,7 +55,7 @@ export default function Account() {
       <div className="stats">
         <Link to="/my" className="stat"><span>보유 티켓</span><strong>{held.length}</strong></Link>
         <Link to="/my" className="stat"><span>양도 중</span><strong>{selling.length}</strong></Link>
-        {role === 'seller' && <Link to="/organizer" className="stat"><span>내 공연</span><strong>{myEvents.length}</strong></Link>}
+        {role === 'seller' && <Link to="/my" className="stat"><span>내 공연</span><strong>{myEvents.length}</strong></Link>}
         {role === 'seller' && <div className="stat"><span>미판매 재고</span><strong>{stock.length}</strong></div>}
         {showProceeds && <div className="stat"><span>정산 가능</span><strong>{formatEth(proceeds)} ETH</strong></div>}
       </div>
@@ -65,7 +65,7 @@ export default function Account() {
           <GuardedButton busy={busy} reason={proceeds === 0n ? '정산 가능한 금액이 없습니다. 예매금은 공연 시작 후 정산됩니다.' : ''}
             describedBy="acc-hint" onClick={() => send('withdrawProceeds', [], undefined, '정산금 출금')}>정산금 출금</GuardedButton>
         )}
-        {role === 'user' && !requested && <Link className="btn" to="/organizer">주최자 신청하기</Link>}
+        {role === 'user' && !requested && <GuardedButton busy={busy} onClick={() => send('requestSeller', [], undefined, '주최자 신청')}>주최자 신청하기</GuardedButton>}
         {role === 'user' && requested && <span className="notice" role="status">주최자 신청이 접수되었습니다. 관리자 승인을 기다려주세요.</span>}
       </div>
       {role === 'seller' && proceeds === 0n && <p id="acc-hint" className="muted">정산 가능한 금액이 없습니다. 예매금은 공연 시작 후 정산됩니다.</p>}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAccount } from 'wagmi'
-import { useEvents, useTickets, useTx } from '../lib/hooks'
+import { useEvents, useRole, useTickets, useTx } from '../lib/hooks'
 import { Empty, Skeleton, PageHead, ConnectPrompt } from '../components/ui'
 import { splitMine } from '../lib/stats'
 import { isListed, stageOf } from '../lib/stage'
@@ -9,6 +9,7 @@ import { usePageTitle } from '../lib/title'
 import Tabs from '../components/Tabs'
 import TicketStub from '../components/TicketStub'
 import TicketActions from '../components/TicketActions'
+import Organizer from './Organizer'
 
 // 보유 티켓을 지금 할 일 기준으로 나눈다. 취소된 공연은 환불해야 하므로 "보유 중"에 둔다.
 const EMPTY = {
@@ -17,7 +18,12 @@ const EMPTY = {
   past: '종료되었거나 입장 완료한 티켓이 없습니다.',
 }
 
+// 주최자는 티켓을 살 수 없으므로 이 자리를 주최자 콘솔이 대신한다.
 export default function MyTickets() {
+  return useRole() === 'seller' ? <Organizer /> : <Tickets />
+}
+
+function Tickets() {
   usePageTitle('내 티켓')
   const { address } = useAccount()
   const { data: events = [] } = useEvents()
@@ -26,7 +32,7 @@ export default function MyTickets() {
   const [tab, setTab] = useState('held')
 
   if (!address) return <ConnectPrompt title="내 티켓">지갑을 연결하면 보유한 티켓을 볼 수 있습니다.</ConnectPrompt>
-  const { held, stock } = splitMine(tickets, events, address)
+  const { held } = splitMine(tickets, events, address)
   const eventOf = (t) => events.find((e) => e.id === t.eventId)
   const isPast = (t) => t.used || ['finished'].includes(stageOf(eventOf(t) ?? { progress: 0 }))
   const groups = {
@@ -58,7 +64,6 @@ export default function MyTickets() {
           <Empty to={tab === 'held' && held.length === 0 ? '/events' : undefined} label="공연 둘러보기">{EMPTY[tab]}</Empty>
         )}
       </div>
-      {stock.length > 0 && <p className="muted" style={{ marginTop: 'var(--s4)' }}>내가 주최한 공연의 미판매 재고 {stock.length}장은 주최자 콘솔에서 관리합니다.</p>}
     </div>
   )
 }

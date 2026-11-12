@@ -11,7 +11,6 @@ import ConnectButton from './ConnectButton'
 const ROLE_LABEL = { owner: '관리자', seller: '주최자', user: '관람객' }
 
 function roleLink(role) {
-  if (role === 'seller') return { to: '/organizer', label: '주최자 콘솔' }
   if (role === 'owner') return { to: '/admin', label: '관리자' }
   return null
 }
@@ -88,7 +87,7 @@ export function Header() {
           <NavLink to="/" end>홈</NavLink>
           <NavLink to="/events">공연</NavLink>
           <NavLink to="/market">티켓 2차 거래</NavLink>
-          <NavLink to="/my">내 티켓</NavLink>
+          <NavLink to="/my">{role === 'seller' ? '주최 공연' : '내 티켓'}</NavLink>
           {extra && <NavLink to={extra.to}>{extra.label}</NavLink>}
         </nav>
         <HeaderSearch />
@@ -102,11 +101,12 @@ export function Header() {
 
 // 모바일 하단 탭바. 공연 상세에서는 CSS로 숨기고 예매 바가 대신한다.
 export function TabBar() {
+  const role = useRole()
   const items = [
     ['/', '홈', 'home'],
     ['/events', '공연', 'events'],
     ['/market', '2차 거래', 'market'],
-    ['/my', '내 티켓', 'ticket'],
+    ['/my', role === 'seller' ? '주최 공연' : '내 티켓', 'ticket'],
     ['/account', '계정', 'account'],
   ]
   return (

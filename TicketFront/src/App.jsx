@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { useAccount, useSwitchChain } from 'wagmi'
 import { Header, TabBar, Footer } from './components/Header'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -9,7 +9,6 @@ import Events from './pages/Events'
 import EventDetail from './pages/EventDetail'
 import Market from './pages/Market'
 import MyTickets from './pages/MyTickets'
-import Organizer from './pages/Organizer'
 import Admin from './pages/Admin'
 import Account from './pages/Account'
 import TicketDetail from './pages/TicketDetail'
@@ -73,7 +72,7 @@ export default function App() {
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/market" element={<Market />} />
             <Route path="/my" element={<MyTickets />} />
-            <Route path="/organizer" element={<Organizer />} />
+            <Route path="/organizer" element={<Navigate to="/my" replace />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/account" element={<Account />} />
             <Route path="/tickets/:id" element={<TicketDetail />} />
